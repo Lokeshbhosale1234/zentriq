@@ -1,0 +1,10 @@
+# Backend
+Backend/target
+*.log
+
+# IDE
+.vscode
+.idea
+
+# Env
+.env
