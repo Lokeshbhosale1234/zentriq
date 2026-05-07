@@ -8,3 +8,5 @@ Backend/target
 
 # Env
 .env
+
+Backend/src/main/resources/application.properties

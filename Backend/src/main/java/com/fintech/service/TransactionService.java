@@ -17,16 +17,24 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.springframework.security.core.context.SecurityContextHolder;
+import com.fintech.entity.User;
+import com.fintech.repository.UserRepository;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class TransactionService {
 
     private final TransactionRepository transactionRepository;
+    private final UserRepository userRepository;
 
     public List<TransactionDTO> getAllTransactions() {
         log.debug("Fetching all transactions");
-        return transactionRepository.findAllByOrderByTransactionDateDesc()
+        String email = getCurrentUserEmail();
+
+        return transactionRepository
+                .findByUserEmailOrderByTransactionDateDesc(email)
                 .stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
@@ -34,7 +42,17 @@ public class TransactionService {
 
     @Transactional
     public TransactionDTO createTransaction(TransactionDTO dto) {
+
         log.debug("Creating transaction: {}", dto.getTitle());
+
+        // Get logged-in user email from JWT
+        String email = getCurrentUserEmail();
+
+        // Find user in database
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Create transaction
         Transaction transaction = Transaction.builder()
                 .title(dto.getTitle())
                 .description(dto.getDescription() != null ? dto.getDescription() : "")
@@ -42,10 +60,19 @@ public class TransactionService {
                 .type(dto.getType())
                 .status(dto.getStatus() != null ? dto.getStatus() : TransactionStatus.COMPLETED)
                 .category(dto.getCategory())
-                .transactionDate(dto.getTransactionDate() != null ? dto.getTransactionDate() : LocalDateTime.now())
+                .transactionDate(dto.getTransactionDate() != null
+                        ? dto.getTransactionDate()
+                        : LocalDateTime.now())
+
+                // IMPORTANT
+                .user(user)
+
                 .build();
+
         Transaction saved = transactionRepository.save(transaction);
+
         log.debug("Transaction created with id: {}", saved.getId());
+
         return toDTO(saved);
     }
 
@@ -94,7 +121,7 @@ public class TransactionService {
 
         for (Object[] row : trendData) {
             String month = (String) row[0];
-            TransactionType type = (TransactionType) row[1];
+            TransactionType type = TransactionType.valueOf((String) row[1]);
             BigDecimal total = (BigDecimal) row[2];
             if (trendMap.containsKey(month)) {
                 AnalyticsDTO.MonthlyTrendDTO trend = trendMap.get(month);
@@ -129,4 +156,12 @@ public class TransactionService {
                 .createdAt(t.getCreatedAt())
                 .build();
     }
+
+    private String getCurrentUserEmail() {
+        return SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+    }
+
 }
