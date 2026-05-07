@@ -5,44 +5,34 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "transactions")
+@Table(name = "users",
+    uniqueConstraints = @UniqueConstraint(columnNames = "email"))
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Transaction {
+public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
-    private String title;
+    private String name;
+
+    @Column(nullable = false, unique = true)
+    private String email;
 
     @Column(nullable = false)
-    private String description;
-
-    @Column(nullable = false, precision = 15, scale = 2)
-    private BigDecimal amount;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private TransactionType type;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private TransactionStatus status;
+    private String password;
 
     @Column(nullable = false)
-    private String category;
-
-    @Column(name = "transaction_date", nullable = false)
-    private LocalDateTime transactionDate;
+    @Builder.Default
+    private String role = "ROLE_USER";
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
@@ -51,8 +41,4 @@ public class Transaction {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
 }
