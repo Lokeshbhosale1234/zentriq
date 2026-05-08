@@ -79,7 +79,7 @@ export default function Sidebar() {
         </div>
         {!collapsed && (
           <span className="font-display font-700 text-base tracking-tight" style={{ color: 'var(--text-primary)' }}>
-            Zentriq
+            FinFlow
           </span>
         )}
         <button
