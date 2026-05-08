@@ -120,11 +120,18 @@ public class TransactionService {
         }
 
         for (Object[] row : trendData) {
+
             String month = (String) row[0];
-            TransactionType type = TransactionType.valueOf((String) row[1]);
+
+            // FIXED LINE
+            TransactionType type = (TransactionType) row[1];
+
             BigDecimal total = (BigDecimal) row[2];
+
             if (trendMap.containsKey(month)) {
+
                 AnalyticsDTO.MonthlyTrendDTO trend = trendMap.get(month);
+
                 if (type == TransactionType.CREDIT) {
                     trend.setIncome(total);
                 } else {
