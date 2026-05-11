@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
 // ✅ Setup axios interceptors BEFORE anything else renders
 import './api/axiosSetup'
@@ -10,6 +10,7 @@ import Layout                  from './components/layout/Layout'
 import Dashboard               from './pages/Dashboard'
 import Transactions            from './pages/Transactions'
 import Analytics               from './pages/Analytics'
+import BudgetsPage             from './pages/budget/BudgetsPage'
 import LoginPage               from './pages/auth/LoginPage'
 import SignupPage              from './pages/auth/SignupPage'
 import AddTransactionModal     from './components/transactions/AddTransactionModal'
@@ -32,8 +33,9 @@ function AppInner() {
           <Route path="/"             element={<Dashboard />} />
           <Route path="/transactions" element={<Transactions />} />
           <Route path="/analytics"    element={<Analytics />} />
-          <Route path="/ai"           element={<PlaceholderPage title="AI Insights"  desc="Coming soon — AI-powered financial insights." />} />
-          <Route path="/payment"      element={<PlaceholderPage title="Payments"     desc="Coming soon — integrated payment processing." />} />
+          <Route path="/budgets"      element={<BudgetsPage />} />
+          <Route path="/ai"           element={<PlaceholderPage title="AI Insights"  desc="Coming soon — AI-powered financial insights and anomaly detection." />} />
+          <Route path="/payment"      element={<PlaceholderPage title="Payments"     desc="Coming soon — integrated payment processing and transfers." />} />
           <Route path="*"             element={<PlaceholderPage title="404"          desc="Page not found." />} />
         </Routes>
       </Layout>
@@ -48,7 +50,7 @@ function AppInner() {
   )
 }
 
-// ─── Placeholder for unimplemented routes ─────────────────────────────────────
+// ─── Reusable placeholder ─────────────────────────────────────────────────────
 function PlaceholderPage({ title, desc }) {
   return (
     <div className="flex flex-col items-center justify-center h-full min-h-[60vh] animate-fade-in">
@@ -78,7 +80,7 @@ export default function App() {
           <Route path="/login"  element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
 
-          {/* All other routes are protected */}
+          {/* All other routes require authentication */}
           <Route
             path="/*"
             element={
