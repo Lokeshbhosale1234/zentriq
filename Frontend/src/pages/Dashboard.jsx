@@ -4,9 +4,11 @@ import BalanceLineChart    from '../components/dashboard/BalanceLineChart'
 import CategoryPieChart    from '../components/dashboard/CategoryPieChart'
 import MonthlyBarChart     from '../components/dashboard/MonthlyBarChart'
 import RecentTransactions  from '../components/dashboard/RecentTransactions'
+import BudgetOverviewBar   from '../components/budget/BudgetOverviewBar'
 import ErrorBanner         from '../components/ui/ErrorBanner'
 import { useAnalytics }    from '../hooks/useAnalytics'
 import { useTransactions } from '../hooks/useTransactions'
+import { useBudgetAnalytics } from '../hooks/useBudgetAnalytics'
 
 const IncomeIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -31,15 +33,20 @@ const CountIcon = () => (
 )
 
 export default function Dashboard() {
+  const now          = new Date()
+  const currentMonth = now.getMonth() + 1
+  const currentYear  = now.getFullYear()
+
   const { analytics, loading: aLoading, error: aError, refetch: aRefetch } = useAnalytics()
-  const { transactions, loading: tLoading, error: tError } = useTransactions()
+  const { transactions, loading: tLoading, error: tError }                 = useTransactions()
+  const { analytics: budgetAnalytics, loading: bLoading }                  = useBudgetAnalytics(currentMonth, currentYear)
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-5 sm:space-y-6 animate-fade-in">
       <ErrorBanner message={aError || tError} onRetry={aRefetch} />
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard title="Total Income"   value={analytics?.totalIncome   || 0} color="green"  icon={<IncomeIcon />}  loading={aLoading} />
         <StatCard title="Total Expense"  value={analytics?.totalExpense  || 0} color="red"    icon={<ExpenseIcon />} loading={aLoading} />
         <StatCard title="Net Balance"    value={analytics?.balance       || 0} color="purple" icon={<BalanceIcon />} loading={aLoading} />
@@ -53,6 +60,9 @@ export default function Dashboard() {
         />
       </div>
 
+      {/* Budget overview — shows current month budgets with spend progress */}
+      <BudgetOverviewBar analytics={budgetAnalytics} loading={bLoading} />
+
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2">
@@ -63,10 +73,10 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Bar chart + recent */}
+      {/* Bar chart + recent transactions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <MonthlyBarChart data={analytics?.monthlyTrend} loading={aLoading} />
-        <RecentTransactions transactions={transactions} loading={tLoading} />
+        <MonthlyBarChart  data={analytics?.monthlyTrend} loading={aLoading} />
+        <RecentTransactions transactions={transactions}  loading={tLoading} />
       </div>
     </div>
   )

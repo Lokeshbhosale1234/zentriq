@@ -9,45 +9,39 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "transactions")
+@Table(name = "budgets",
+    uniqueConstraints = @UniqueConstraint(
+        columnNames = {"user_id", "category", "month", "year"},
+        name = "uk_budget_user_category_period"
+    )
+)
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Transaction {
+public class Budget {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // ✅ Added: owner of this transaction (nullable for backwards-compat with existing rows)
+    // The budget owner — NOT exposed directly in DTO, resolved from JWT
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = true)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
-
-    @Column(nullable = false)
-    private String title;
-
-    @Column(nullable = false)
-    private String description;
-
-    @Column(nullable = false, precision = 15, scale = 2)
-    private BigDecimal amount;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private TransactionType type;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private TransactionStatus status;
 
     @Column(nullable = false)
     private String category;
 
-    @Column(name = "transaction_date", nullable = false)
-    private LocalDateTime transactionDate;
+    @Column(name = "limit_amount", nullable = false, precision = 15, scale = 2)
+    private BigDecimal limitAmount;
+
+    @Column(nullable = false)
+    private Integer month;   // 1–12
+
+    @Column(nullable = false)
+    private Integer year;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
