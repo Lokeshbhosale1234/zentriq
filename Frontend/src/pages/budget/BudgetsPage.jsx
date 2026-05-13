@@ -5,150 +5,116 @@ import BudgetCard             from '../../components/budget/BudgetCard'
 import BudgetModal            from '../../components/budget/BudgetModal'
 import ErrorBanner            from '../../components/ui/ErrorBanner'
 
-const MONTH_NAMES = [
-  'January','February','March','April','May','June',
-  'July','August','September','October','November','December',
-]
+const fmtINR = (v) =>
+  new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(parseFloat(v) || 0)
+
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December']
 const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+const cy = new Date().getFullYear()
+const cm = new Date().getMonth() + 1
+const YEARS = Array.from({ length: 5 }, (_, i) => cy - 1 + i)
 
-const currentYear  = new Date().getFullYear()
-const currentMonth = new Date().getMonth() + 1
-const YEARS        = Array.from({ length: 5 }, (_, i) => currentYear - 1 + i)
-
-function fmtINR(v) {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency', currency: 'INR', maximumFractionDigits: 0,
-  }).format(parseFloat(v) || 0)
-}
+const SkeletonCard = () => (
+  <div className="card" style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+    <div style={{ display: 'flex', gap: 10 }}>
+      <div className="skeleton" style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0 }} />
+      <div style={{ flex: 1 }}>
+        <div className="skeleton" style={{ height: 12, width: '55%', marginBottom: 6 }} />
+        <div className="skeleton" style={{ height: 9,  width: '30%' }} />
+      </div>
+    </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+      {[80, 65, 55].map(w => <div key={w} className="skeleton" style={{ height: 10, width: `${w}%` }} />)}
+    </div>
+    <div className="skeleton" style={{ height: 4, borderRadius: 99 }} />
+  </div>
+)
 
 export default function BudgetsPage() {
   const [showModal, setShowModal] = useState(false)
   const [editData,  setEditData]  = useState(null)
-  const [viewMonth, setViewMonth] = useState(currentMonth)
-  const [viewYear,  setViewYear]  = useState(currentYear)
-  const [tab,       setTab]       = useState('analytics') // 'analytics' | 'all'
+  const [viewMonth, setViewMonth] = useState(cm)
+  const [viewYear,  setViewYear]  = useState(cy)
+  const [tab,       setTab]       = useState('analytics')
 
-  const {
-    budgets, loading: bLoading, error: bError,
-    createBudget, updateBudget, deleteBudget, refetch: bRefetch,
-  } = useBudgets()
+  const { budgets, loading: bLoading, error: bError, createBudget, updateBudget, deleteBudget, refetch: bRefetch } = useBudgets()
+  const { analytics, loading: aLoading, error: aError, refetch: aRefetch } = useBudgetAnalytics(viewMonth, viewYear)
 
-  const {
-    analytics, loading: aLoading, error: aError, refetch: aRefetch,
-  } = useBudgetAnalytics(viewMonth, viewYear)
-
-  // ── Handlers ────────────────────────────────────────────────────────────────
-  const handleCreate = async (payload) => {
-    await createBudget(payload)
-    aRefetch()
-  }
-
-  const handleUpdate = async (payload) => {
-    await updateBudget(editData.id, payload)
-    aRefetch()
-    setEditData(null)
-  }
-
-  const handleEdit = (data) => {
-    setEditData(data)
-    setShowModal(true)
-  }
-
-  const handleDelete = async (id) => {
+  const handleCreate = async (p) => { await createBudget(p); aRefetch() }
+  const handleUpdate = async (p) => { await updateBudget(editData.id, p); aRefetch(); setEditData(null) }
+  const handleEdit   = (d)         => { setEditData(d); setShowModal(true) }
+  const handleDelete = async (id)  => {
     if (!window.confirm('Delete this budget?')) return
-    try {
-      await deleteBudget(id)
-      aRefetch()
-    } catch (err) {
-      alert(err.message)
-    }
+    try { await deleteBudget(id); aRefetch() } catch (err) { alert(err.message) }
   }
+  const handleModalClose = () => { setShowModal(false); setEditData(null) }
 
-  const handleModalClose = () => {
-    setShowModal(false)
-    setEditData(null)
-  }
-
-  // ── Computed stats (analytics tab) ──────────────────────────────────────────
   const totalLimit = analytics.reduce((s, a) => s + parseFloat(a.limitAmount || 0), 0)
-  const totalSpent = analytics.reduce((s, a) => s + parseFloat(a.spent        || 0), 0)
+  const totalSpent = analytics.reduce((s, a) => s + parseFloat(a.spent || 0), 0)
   const exceeded   = analytics.filter(a => a.exceeded).length
-  const remaining  = Math.max(totalLimit - totalSpent, 0)
 
-  const SUMMARY = [
-    { label: 'Total Budget',  value: fmtINR(totalLimit), color: '#6366f1', bg: 'rgba(99,102,241,0.1)'  },
-    { label: 'Total Spent',   value: fmtINR(totalSpent), color: '#f59e0b', bg: 'rgba(245,158,11,0.1)'  },
-    { label: 'Remaining',     value: fmtINR(remaining),  color: '#10b981', bg: 'rgba(16,185,129,0.1)'  },
-    {
-      label: 'Exceeded',
-      value: exceeded > 0 ? `${exceeded} categor${exceeded > 1 ? 'ies' : 'y'}` : 'None',
-      color: exceeded > 0 ? '#ef4444' : '#10b981',
-      bg:    exceeded > 0 ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)',
-    },
-  ]
-
-  // ── Render ───────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-4 sm:space-y-6 animate-fade-in">
-      {/* Error banners */}
+    <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <ErrorBanner message={bError || aError} onRetry={() => { bRefetch(); aRefetch() }} />
 
-      {/* Page header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      {/* ── Page title ────────────────────────────────────────────── */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div>
-          <h1 className="font-display font-700 text-xl" style={{ color: 'var(--text-primary)' }}>
+          <h1 className="font-display font-700" style={{ fontSize: 20, letterSpacing: '-0.025em', color: 'var(--text-primary)', marginBottom: 3 }}>
             Budget Management
           </h1>
-          <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>
-            Set and track monthly spending limits by category
-          </p>
+          <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Set and track monthly spending limits by category</p>
         </div>
-        <button
-          className="btn btn-primary self-start sm:self-auto"
-          onClick={() => setShowModal(true)}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+        <button className="btn btn-primary" onClick={() => setShowModal(true)} style={{ gap: 6, flexShrink: 0 }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
           New Budget
         </button>
       </div>
 
-      {/* Tab bar + period selector */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        {/* Tab switcher */}
-        <div className="flex rounded-xl overflow-hidden" style={{ border: '1px solid var(--border)', width: 'fit-content' }}>
+      {/* ── Tab bar + period ──────────────────────────────────────── */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+        {/* Tabs */}
+        <div style={{ display: 'flex', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 10, padding: 3, gap: 2 }}>
           {[{ k: 'analytics', l: 'Analytics' }, { k: 'all', l: 'All Budgets' }].map(t => (
             <button
               key={t.k}
+              type="button"
               onClick={() => setTab(t.k)}
-              className="px-4 py-2 text-sm font-500 transition-all"
               style={{
-                background: tab === t.k ? 'rgba(99,102,241,0.2)' : 'transparent',
-                color:      tab === t.k ? '#a5b4fc'               : 'var(--text-secondary)',
-              }}>
+                padding:      '7px 16px',
+                borderRadius: 8,
+                fontSize:     12,
+                fontWeight:   600,
+                cursor:       'pointer',
+                border:       'none',
+                transition:   'all 0.18s ease',
+                background:   tab === t.k ? 'var(--bg-elevated)' : 'transparent',
+                color:        tab === t.k ? 'var(--text-primary)' : 'var(--text-secondary)',
+                boxShadow:    tab === t.k ? '0 1px 4px rgba(0,0,0,0.3)' : 'none',
+              }}
+            >
               {t.l}
             </button>
           ))}
         </div>
 
-        {/* Period selector (analytics tab only) */}
+        {/* Period picker */}
         {tab === 'analytics' && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Period:</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Period:</span>
             <select
               className="input"
-              style={{ width: 'auto', padding: '0.375rem 0.625rem', fontSize: '0.8rem' }}
+              style={{ width: 'auto', fontSize: 12, padding: '6px 10px' }}
               value={viewMonth}
               onChange={e => setViewMonth(parseInt(e.target.value))}
             >
-              {MONTH_NAMES.map((m, i) => (
-                <option key={i + 1} value={i + 1}>{m}</option>
-              ))}
+              {MONTH_NAMES.map((m, i) => <option key={i + 1} value={i + 1}>{m}</option>)}
             </select>
             <select
               className="input"
-              style={{ width: 'auto', padding: '0.375rem 0.625rem', fontSize: '0.8rem' }}
+              style={{ width: 'auto', fontSize: 12, padding: '6px 10px' }}
               value={viewYear}
               onChange={e => setViewYear(parseInt(e.target.value))}
             >
@@ -158,91 +124,75 @@ export default function BudgetsPage() {
         )}
       </div>
 
-      {/* ── Analytics Tab ──────────────────────────────────────────────────────── */}
+      {/* ── Analytics Tab ─────────────────────────────────────────── */}
       {tab === 'analytics' && (
         <>
-          {/* Summary stat cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {SUMMARY.map(s => (
-              <div key={s.label} className="card p-3 sm:p-4">
-                <p className="text-xs mb-1.5 truncate" style={{ color: 'var(--text-muted)' }}>{s.label}</p>
+          {/* Summary bar */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }} className="sm:grid-cols-4">
+            {[
+              { label: 'Total Budget', value: fmtINR(totalLimit),          color: '#6366f1' },
+              { label: 'Total Spent',  value: fmtINR(totalSpent),          color: '#f59e0b' },
+              { label: 'Remaining',    value: fmtINR(Math.max(totalLimit - totalSpent, 0)), color: '#10b981' },
+              { label: 'Exceeded',     value: exceeded > 0 ? `${exceeded} categor${exceeded > 1 ? 'ies' : 'y'}` : 'None', color: exceeded > 0 ? '#f43f5e' : '#10b981' },
+            ].map(s => (
+              <div key={s.label} className="card" style={{ padding: '14px 18px' }}>
+                <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 6 }}>{s.label}</p>
                 {aLoading
-                  ? <div className="h-6 rounded animate-pulse" style={{ background: 'rgba(255,255,255,0.06)' }} />
-                  : <p className="text-sm sm:text-base font-700 font-mono truncate" style={{ color: s.color }}>{s.value}</p>
+                  ? <div className="skeleton" style={{ height: 20, width: '75%' }} />
+                  : <p className="font-mono" style={{ fontSize: 17, fontWeight: 700, color: s.color }}>{s.value}</p>
                 }
               </div>
             ))}
           </div>
 
-          {/* Overspending alert banner */}
+          {/* Overspend alert */}
           {!aLoading && exceeded > 0 && (
-            <div className="flex items-center gap-3 rounded-xl px-4 py-3"
-              style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                strokeWidth="2" style={{ color: '#ef4444', flexShrink: 0 }}>
+            <div className="animate-slide-down" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', borderRadius: 12, background: 'rgba(244,63,94,0.07)', border: '1px solid rgba(244,63,94,0.18)' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }}>
                 <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
                 <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
               </svg>
               <div>
-                <p className="text-sm font-600" style={{ color: '#ef4444' }}>
+                <p style={{ fontSize: 13, fontWeight: 600, color: '#f43f5e', marginBottom: 2 }}>
                   {exceeded} budget{exceeded > 1 ? 's' : ''} exceeded for {MONTH_SHORT[viewMonth - 1]} {viewYear}
                 </p>
-                <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                  Review your spending in the categories below
+                <p style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+                  Review the categories below and adjust your spending or increase the limits.
                 </p>
               </div>
             </div>
           )}
 
-          {/* Budget analytics cards grid */}
+          {/* Budget cards */}
           {aLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="card p-5 space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl animate-pulse" style={{ background: 'rgba(255,255,255,0.08)', flexShrink: 0 }} />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-3 rounded animate-pulse" style={{ background: 'rgba(255,255,255,0.06)', width: '60%' }} />
-                      <div className="h-2.5 rounded animate-pulse" style={{ background: 'rgba(255,255,255,0.04)', width: '40%' }} />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="h-2.5 rounded animate-pulse" style={{ background: 'rgba(255,255,255,0.05)' }} />
-                    <div className="h-2.5 rounded animate-pulse" style={{ background: 'rgba(255,255,255,0.04)' }} />
-                  </div>
-                  <div className="h-2 rounded-full animate-pulse" style={{ background: 'rgba(255,255,255,0.06)' }} />
-                </div>
-              ))}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+              {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
             </div>
           ) : analytics.length === 0 ? (
-            <div className="card p-10 sm:p-14 text-center">
-              <p className="text-4xl mb-4">🎯</p>
-              <p className="font-600 mb-1" style={{ color: 'var(--text-primary)' }}>
+            <div className="card" style={{ padding: '56px 24px', textAlign: 'center' }}>
+              <p style={{ fontSize: 36, marginBottom: 14 }}>🎯</p>
+              <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>
                 No budgets for {MONTH_SHORT[viewMonth - 1]} {viewYear}
               </p>
-              <p className="text-sm mb-5" style={{ color: 'var(--text-muted)' }}>
-                Create budgets to start tracking your spending against limits
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', maxWidth: 360, margin: '0 auto 20px' }}>
+                Create category budgets to automatically track how much you're spending against your monthly targets.
               </p>
               <button className="btn btn-primary" onClick={() => setShowModal(true)}>
                 Create First Budget
               </button>
             </div>
           ) : (
-            // Sort: exceeded first, then by % used desc
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div
+              className="stagger"
+              style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}
+            >
               {[...analytics]
                 .sort((a, b) => {
                   if (a.exceeded !== b.exceeded) return a.exceeded ? -1 : 1
                   return (b.percentageUsed || 0) - (a.percentageUsed || 0)
                 })
                 .map(a => (
-                  <BudgetCard
-                    key={a.id}
-                    data={a}
-                    isAnalytics
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                  />
+                  <BudgetCard key={a.id} data={a} isAnalytics onEdit={handleEdit} onDelete={handleDelete} />
                 ))
               }
             </div>
@@ -250,41 +200,34 @@ export default function BudgetsPage() {
         </>
       )}
 
-      {/* ── All Budgets Tab ──────────────────────────────────────────────────── */}
+      {/* ── All Budgets Tab ───────────────────────────────────────── */}
       {tab === 'all' && (
         bLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="card p-5 h-36 animate-pulse" style={{ background: 'rgba(255,255,255,0.03)' }} />
-            ))}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+            {[...Array(4)].map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : budgets.length === 0 ? (
-          <div className="card p-10 sm:p-14 text-center">
-            <p className="text-4xl mb-4">💰</p>
-            <p className="font-600 mb-1" style={{ color: 'var(--text-primary)' }}>No budgets yet</p>
-            <p className="text-sm mb-5" style={{ color: 'var(--text-muted)' }}>
-              Create your first monthly budget to start tracking spending
+          <div className="card" style={{ padding: '56px 24px', textAlign: 'center' }}>
+            <p style={{ fontSize: 36, marginBottom: 14 }}>💰</p>
+            <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>No budgets yet</p>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', maxWidth: 320, margin: '0 auto 20px' }}>
+              Create your first monthly budget to start tracking spending against limits.
             </p>
-            <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-              Create Budget
-            </button>
+            <button className="btn btn-primary" onClick={() => setShowModal(true)}>Create Budget</button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div
+            className="stagger"
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}
+          >
             {budgets.map(b => (
-              <BudgetCard
-                key={b.id}
-                data={b}
-                isAnalytics={false}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-              />
+              <BudgetCard key={b.id} data={b} isAnalytics={false} onEdit={handleEdit} onDelete={handleDelete} />
             ))}
           </div>
         )
       )}
 
-      {/* ── Modal ───────────────────────────────────────────────────────────── */}
+      {/* Modal */}
       {showModal && (
         <BudgetModal
           onClose={handleModalClose}
