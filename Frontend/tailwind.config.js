@@ -8,56 +8,56 @@ export default {
     extend: {
       colors: {
         primary: {
-          50:  '#eef2ff',
-          100: '#e0e7ff',
-          200: '#c7d2fe',
-          300: '#a5b4fc',
-          400: '#818cf8',
-          500: '#6366f1',
-          600: '#4f46e5',
-          700: '#4338ca',
-          800: '#3730a3',
-          900: '#312e81',
+          50:  '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe',
+          300: '#a5b4fc', 400: '#818cf8', 500: '#6366f1',
+          600: '#4f46e5', 700: '#4338ca', 800: '#3730a3', 900: '#312e81',
         },
-        surface: {
-          DEFAULT: '#0f0f1a',
-          50:  '#1a1a2e',
-          100: '#16213e',
-          200: '#1f2544',
-        },
-        accent: {
-          green:  '#10b981',
-          red:    '#ef4444',
-          amber:  '#f59e0b',
-          cyan:   '#06b6d4',
-        }
       },
       fontFamily: {
         sans:    ['DM Sans', 'system-ui', 'sans-serif'],
         display: ['Syne', 'system-ui', 'sans-serif'],
         mono:    ['JetBrains Mono', 'monospace'],
       },
-      borderRadius: {
-        xl:  '1rem',
-        '2xl': '1.25rem',
-        '3xl': '1.5rem',
-      },
-      boxShadow: {
-        glow:        '0 0 20px rgba(99,102,241,0.3)',
-        'glow-green':'0 0 20px rgba(16,185,129,0.3)',
-        'glow-red':  '0 0 20px rgba(239,68,68,0.3)',
-        card:        '0 4px 24px rgba(0,0,0,0.4)',
+      gridTemplateColumns: {
+        // named shortcuts used inline in JSX via className
+        '2': 'repeat(2, minmax(0, 1fr))',
+        '3': 'repeat(3, minmax(0, 1fr))',
+        '4': 'repeat(4, minmax(0, 1fr))',
       },
       animation: {
-        'fade-in':    'fadeIn 0.4s ease-in-out',
-        'slide-up':   'slideUp 0.4s ease-out',
-        'pulse-slow': 'pulse 3s cubic-bezier(0.4,0,0.6,1) infinite',
+        'spin-slow': 'spin 1.4s linear infinite',
       },
-      keyframes: {
-        fadeIn:  { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
-        slideUp: { '0%': { opacity: '0', transform: 'translateY(16px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+      screens: {
+        // Keep defaults, just document them for clarity
+        'sm': '640px',
+        'md': '768px',
+        'lg': '1024px',
+        'xl': '1280px',
+        '2xl':'1536px',
       },
     },
   },
+  // Safelist classes used dynamically (e.g. in JSX className strings)
+  safelist: [
+    // Grid layouts used inside JSX style strings + className combos
+    'lg:grid-cols-2', 'lg:grid-cols-3', 'lg:grid-cols-4',
+    'sm:grid-cols-4',
+    'lg:col-span-2',
+    // Sidebar margin
+    'lg:ml-[var(--sidebar-offset,260px)]',
+    // Nav active
+    'active',
+    // Animations
+    'animate-fade-in', 'animate-slide-up', 'animate-slide-down',
+    'animate-scale-in', 'animate-spin-custom', 'animate-float',
+    'page-enter', 'stagger',
+    // Skeletons
+    'skeleton',
+    // Responsive hidden/shown
+    'hidden', 'sm:hidden', 'sm:inline', 'sm:block', 'sm:flex',
+    'md:block', 'lg:hidden', 'lg:!translate-x-0', 'lg:!relative', 'lg:!inset-auto',
+    // Font
+    'font-mono', 'font-display', 'font-700', 'font-600', 'font-500',
+  ],
   plugins: [],
 }

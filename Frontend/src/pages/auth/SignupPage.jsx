@@ -3,26 +3,68 @@ import { Link, useNavigate } from 'react-router-dom'
 import { register } from '../../api/authApi'
 import { useAuth } from '../../context/AuthContext'
 
+const Spinner = () => (
+  <svg className="animate-spin-custom" width="15" height="15" viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" opacity=".2"/>
+    <path d="M21 12a9 9 0 00-9-9"/>
+  </svg>
+)
+
+const FieldError = ({ msg }) => msg ? (
+  <p className="animate-slide-down" style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#f43f5e', marginTop: 5 }}>
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ flexShrink: 0 }}>
+      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    {msg}
+  </p>
+) : null
+
+/* Strength meter */
+function StrengthBar({ password }) {
+  const score = !password ? 0
+    : password.length < 6  ? 1
+    : password.length < 10 ? 2
+    : /[A-Z]/.test(password) && /[0-9]/.test(password) ? 4 : 3
+
+  const colors = ['transparent', '#f43f5e', '#f59e0b', '#10b981', '#10b981']
+  const labels = ['',            'Weak',     'Fair',    'Good',    'Strong']
+
+  return score > 0 ? (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+      <div style={{ display: 'flex', gap: 3, flex: 1 }}>
+        {[1,2,3,4].map(i => (
+          <div key={i} style={{
+            flex: 1, height: 3, borderRadius: 99,
+            background:  i <= score ? colors[score] : 'rgba(255,255,255,0.07)',
+            transition: 'background 0.28s ease',
+          }}/>
+        ))}
+      </div>
+      <span style={{ fontSize: 10, fontWeight: 600, color: colors[score], minWidth: 36 }}>
+        {labels[score]}
+      </span>
+    </div>
+  ) : null
+}
+
 export default function SignupPage() {
-  const navigate = useNavigate()
+  const navigate     = useNavigate()
   const { saveAuth } = useAuth()
 
-  const [form, setForm]       = useState({ name: '', email: '', password: '', confirm: '' })
-  const [errors, setErrors]   = useState({})
+  const [form,    setForm]    = useState({ name: '', email: '', password: '', confirm: '' })
+  const [errors,  setErrors]  = useState({})
   const [loading, setLoading] = useState(false)
+  const [showPw,  setShowPw]  = useState(false)
 
-  const set = (field, value) => {
-    setForm(prev => ({ ...prev, [field]: value }))
-    if (errors[field]) setErrors(prev => ({ ...prev, [field]: null }))
-  }
+  const set = (k, v) => { setForm(p => ({ ...p, [k]: v })); if (errors[k]) setErrors(p => ({ ...p, [k]: null })) }
 
   const validate = () => {
     const e = {}
-    if (!form.name.trim())                   e.name     = 'Name is required'
-    if (!form.email.trim())                  e.email    = 'Email is required'
-    if (!/\S+@\S+\.\S+/.test(form.email))   e.email    = 'Enter a valid email'
-    if (form.password.length < 6)            e.password = 'Password must be at least 6 characters'
-    if (form.password !== form.confirm)      e.confirm  = 'Passwords do not match'
+    if (!form.name.trim())                             e.name     = 'Full name is required'
+    if (!form.email || !/\S+@\S+\.\S+/.test(form.email)) e.email = 'Enter a valid email address'
+    if (form.password.length < 6)                      e.password = 'Password must be at least 6 characters'
+    if (form.password !== form.confirm)                e.confirm  = 'Passwords do not match'
     return e
   }
 
@@ -36,110 +78,221 @@ export default function SignupPage() {
       saveAuth(data)
       navigate('/', { replace: true })
     } catch (err) {
-      setErrors({ submit: err.message || 'Registration failed' })
+      setErrors({ submit: err.message || 'Registration failed. Please try again.' })
     } finally {
       setLoading(false)
     }
   }
 
-  const Field = ({ id, label, type = 'text', placeholder, autoComplete }) => (
-    <div>
-      <label className="block text-xs font-600 mb-1.5 uppercase tracking-wider"
-        style={{ color: 'var(--text-muted)' }}>{label}</label>
-      <input
-        className="input"
-        id={id} type={type}
-        placeholder={placeholder}
-        value={form[id]}
-        onChange={e => set(id, e.target.value)}
-        autoComplete={autoComplete}
-        disabled={loading}
-      />
-      {errors[id] && (
-        <p className="text-xs mt-1" style={{ color: 'var(--accent-red)' }}>{errors[id]}</p>
-      )}
-    </div>
-  )
-
   return (
-    <div className="min-h-screen flex items-center justify-center px-4"
-      style={{ background: 'var(--bg-primary)' }}>
+    <div style={{
+      minHeight:      '100dvh',
+      background:     'var(--bg-base)',
+      display:        'flex',
+      alignItems:     'center',
+      justifyContent: 'center',
+      padding:        '24px 16px',
+      position:       'relative',
+      overflow:       'hidden',
+    }}>
+      {/* Ambient glows */}
+      <div aria-hidden style={{
+        position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none',
+        background: 'radial-gradient(ellipse 70% 50% at 50% -10%, rgba(99,102,241,0.13) 0%, transparent 65%)',
+      }}/>
+      <div aria-hidden style={{
+        position: 'fixed', bottom: '-20vh', left: '-10vw', zIndex: 0, pointerEvents: 'none',
+        width: '55vw', height: '55vh',
+        background: 'radial-gradient(ellipse, rgba(168,85,247,0.055) 0%, transparent 65%)',
+      }}/>
+      <div className="noise-overlay" aria-hidden/>
 
-      <div style={{
-        position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0,
-        background: 'radial-gradient(ellipse 60% 40% at 50% 0%, rgba(99,102,241,0.12), transparent)',
-      }} />
-
-      <div className="w-full max-w-md animate-slide-up" style={{ position: 'relative', zIndex: 1 }}>
+      <div style={{ width: '100%', maxWidth: 440, position: 'relative', zIndex: 1 }}>
 
         {/* Logo */}
-        <div className="flex items-center justify-center gap-3 mb-8">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, #6366f1, #818cf8)' }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 28 }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: 10,
+            background: 'linear-gradient(135deg, #6366f1 0%, #7c3aed 100%)',
+            boxShadow:  '0 0 28px rgba(99,102,241,0.4)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
             </svg>
           </div>
-          <span className="font-display font-700 text-2xl" style={{ color: 'var(--text-primary)' }}>
-            FinFlow
+          <span className="font-display font-700" style={{ fontSize: 20, letterSpacing: '-0.03em', color: 'var(--text-primary)' }}>
+            Zentriq
           </span>
         </div>
 
         {/* Card */}
-        <div className="card p-8">
-          <div className="mb-7 text-center">
-            <h1 className="font-display font-700 text-2xl mb-1" style={{ color: 'var(--text-primary)' }}>
-              Create account
+        <div className="card-glass animate-slide-up" style={{
+          padding:   '32px 32px 28px',
+          boxShadow: '0 32px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.05)',
+        }}>
+          <div style={{ marginBottom: 24, textAlign: 'center' }}>
+            <h1 className="font-display font-700" style={{ fontSize: 22, letterSpacing: '-0.025em', color: 'var(--text-primary)', marginBottom: 5 }}>
+              Create your account
             </h1>
-            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-              Get started with FinFlow today
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              Start tracking your finances with Zentriq
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Field id="name"     label="Full Name"        placeholder="John Doe"          autoComplete="name" />
-            <Field id="email"    label="Email"            placeholder="you@example.com"   autoComplete="email" type="email" />
-            <Field id="password" label="Password"         placeholder="Min. 6 characters" autoComplete="new-password" type="password" />
-            <Field id="confirm"  label="Confirm Password" placeholder="Repeat password"   autoComplete="new-password" type="password" />
+          <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: 15 }}>
 
+            {/* Full name */}
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, letterSpacing: '0.03em' }}>
+                Full name
+              </label>
+              <input
+                className="input"
+                type="text" autoComplete="name"
+                placeholder="Jane Smith"
+                value={form.name}
+                onChange={e => set('name', e.target.value)}
+                disabled={loading}
+                style={{ height: 42 }}
+              />
+              <FieldError msg={errors.name} />
+            </div>
+
+            {/* Email */}
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, letterSpacing: '0.03em' }}>
+                Email address
+              </label>
+              <input
+                className="input"
+                type="email" autoComplete="email"
+                placeholder="jane@example.com"
+                value={form.email}
+                onChange={e => set('email', e.target.value)}
+                disabled={loading}
+                style={{ height: 42 }}
+              />
+              <FieldError msg={errors.email} />
+            </div>
+
+            {/* Password */}
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, letterSpacing: '0.03em' }}>
+                Password
+              </label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  className="input"
+                  type={showPw ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  placeholder="Min. 6 characters"
+                  value={form.password}
+                  onChange={e => set('password', e.target.value)}
+                  disabled={loading}
+                  style={{ height: 42, paddingRight: 42 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPw(p => !p)}
+                  tabIndex={-1}
+                  style={{
+                    position: 'absolute', right: 13, top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: 'var(--text-muted)', padding: 0, lineHeight: 0,
+                    transition: 'color 0.14s ease',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                  aria-label={showPw ? 'Hide password' : 'Show password'}
+                >
+                  {showPw ? (
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                      <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                      <line x1="1" y1="1" x2="23" y2="23"/>
+                    </svg>
+                  ) : (
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  )}
+                </button>
+              </div>
+              <StrengthBar password={form.password} />
+              <FieldError msg={errors.password} />
+            </div>
+
+            {/* Confirm password */}
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, letterSpacing: '0.03em' }}>
+                Confirm password
+              </label>
+              <input
+                className="input"
+                type="password" autoComplete="new-password"
+                placeholder="Repeat your password"
+                value={form.confirm}
+                onChange={e => set('confirm', e.target.value)}
+                disabled={loading}
+                style={{ height: 42 }}
+              />
+              <FieldError msg={errors.confirm} />
+            </div>
+
+            {/* Submit error */}
             {errors.submit && (
-              <div className="rounded-xl px-4 py-3 text-sm animate-fade-in"
-                style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', color: '#ef4444' }}>
+              <div className="animate-scale-in" style={{
+                display: 'flex', alignItems: 'center', gap: 9,
+                padding: '10px 13px', borderRadius: 10,
+                background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.2)',
+                fontSize: 13, color: '#f43f5e',
+              }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }}>
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
                 {errors.submit}
               </div>
             )}
 
+            {/* Submit */}
             <button
               type="submit"
-              className="btn btn-primary w-full justify-center mt-2"
-              style={{ padding: '0.75rem' }}
+              className="btn btn-primary"
+              style={{ height: 44, fontSize: 14, marginTop: 4, width: '100%' }}
               disabled={loading}
             >
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <svg className="animate-spin" width="15" height="15" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" strokeWidth="2">
-                    <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" opacity=".25"/>
-                    <path d="M21 12a9 9 0 00-9-9"/>
-                  </svg>
-                  Creating account…
-                </span>
-              ) : 'Create account'}
+              {loading ? <><Spinner /> Creating account…</> : 'Create account'}
             </button>
           </form>
 
-          <p className="mt-6 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
-            Already have an account?{' '}
-            <Link to="/login"
-              className="font-600 transition-colors"
-              style={{ color: 'var(--accent-purple)' }}
-              onMouseEnter={e => e.currentTarget.style.color = '#818cf8'}
-              onMouseLeave={e => e.currentTarget.style.color = 'var(--accent-purple)'}
-            >
-              Sign in
-            </Link>
-          </p>
+          {/* Divider */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0' }}>
+            <div style={{ flex: 1, height: 1, background: 'var(--border)' }}/>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Already have an account?</span>
+            <div style={{ flex: 1, height: 1, background: 'var(--border)' }}/>
+          </div>
+
+          <Link
+            to="/login"
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              height: 40, borderRadius: 10,
+              background: 'var(--bg-input)', border: '1px solid var(--border)',
+              color: 'var(--text-secondary)', fontSize: 13, fontWeight: 600,
+              textDecoration: 'none', transition: 'all 0.16s ease',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-input-hover)'; e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-input)';       e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'var(--border)' }}
+          >
+            Sign in instead →
+          </Link>
         </div>
+
+        <p style={{ textAlign: 'center', marginTop: 20, fontSize: 11, color: 'var(--text-muted)' }}>
+          © {new Date().getFullYear()} Zentriq. All rights reserved.
+        </p>
       </div>
     </div>
   )
