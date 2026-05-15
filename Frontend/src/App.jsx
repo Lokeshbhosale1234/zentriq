@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
+import Insights from './pages/Insights'
+
 // ✅ Global Axios interceptors — must be imported before any API call
 import './api/axiosSetup'
 
@@ -67,7 +69,7 @@ function AppInner() {
           <Route path="/transactions" element={<Transactions />} />
           <Route path="/analytics"    element={<Analytics />} />
           <Route path="/budgets"      element={<BudgetsPage />} />
-          <Route path="/ai"           element={<PlaceholderPage title="AI Insights"  desc="Coming soon — AI-powered anomaly detection, spending forecasts, and financial health scores." />} />
+          <Route path="/ai"           element={<Insights />} />
           <Route path="/payment"      element={<PlaceholderPage title="Payments"     desc="Coming soon — integrated payment processing, transfers, and bill scheduling." />} />
           <Route path="*"             element={<PlaceholderPage title="404 — Page Not Found" desc="The page you're looking for doesn't exist or has been moved." />} />
         </Routes>
