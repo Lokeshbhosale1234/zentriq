@@ -82,12 +82,19 @@ export default function Topbar({ onAddTransaction, onMobileMenuToggle }) {
             {meta.title}
           </h1>
           {user && (
-            <p
-              className="hidden sm:block truncate"
-              style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.3, marginTop: 1 }}
-            >
-              {greeting()}, {user.name?.split(' ')[0] || 'there'} · {meta.subtitle}
-            </p>
+           <p
+  className="hidden sm:block truncate"
+  style={{
+    fontSize: 13,
+    color: 'var(--text-secondary)',
+    lineHeight: 1.4,
+    marginTop: 2,
+    fontWeight: 500,
+    opacity: 0.92,
+  }}
+>
+  {greeting()}, {user.name?.split(' ')[0] || 'there'} 👋
+</p>
           )}
         </div>
       </div>

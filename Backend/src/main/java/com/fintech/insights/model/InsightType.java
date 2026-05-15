@@ -1,0 +1,11 @@
+package com.fintech.insights.model;
+
+public enum InsightType {
+    OVERSPENDING,
+    SAVINGS_SUGGESTION,
+    BUDGET_WARNING,
+    TREND_ANALYSIS,
+    CATEGORY_INTELLIGENCE,
+    HEALTH_SCORE,
+    SMART_SUMMARY
+}

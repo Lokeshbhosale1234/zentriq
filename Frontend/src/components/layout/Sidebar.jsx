@@ -39,22 +39,26 @@ const NAV = [
       </svg>
     ),
   },
+  {
+  to: '/ai',
+  label: 'AI Insights',
+  icon: (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+    </svg>
+  ),
+},
 ]
 
 const SOON = [
+ 
   {
-    label: 'AI Insights',
-    icon: (
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-      </svg>
-    ),
-  },
-  {
+    to: '/payment',
     label: 'Payments',
     icon: (
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
+        <rect x="2" y="5" width="20" height="14" rx="2"/>
+        <line x1="2" y1="10" x2="22" y2="10"/>
       </svg>
     ),
   },
@@ -226,16 +230,16 @@ export default function Sidebar({ mobileOpen, onMobileClose }) {
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 1 }}>
               {SOON.map(item => (
                 <li key={item.label}>
-                  <div
-                    className="nav-item"
-                    style={{
-                      cursor:         'not-allowed',
-                      opacity:        0.45,
-                      justifyContent: collapsed ? 'center' : undefined,
-                      padding:        collapsed ? '9px 0' : undefined,
-                    }}
-                    title={collapsed ? item.label : undefined}
-                  >
+                  <NavLink
+  to={item.to}
+  className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+  title={collapsed ? item.label : undefined}
+  style={{
+    justifyContent: collapsed ? 'center' : undefined,
+    padding: collapsed ? '9px 0' : undefined,
+    opacity: 0.75,
+  }}
+>
                     <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>{item.icon}</span>
                     {!collapsed && (
                       <>
@@ -243,7 +247,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }) {
                         <span className="badge badge-violet" style={{ fontSize: 9 }}>Soon</span>
                       </>
                     )}
-                  </div>
+                  </NavLink>
                 </li>
               ))}
             </ul>
@@ -251,55 +255,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }) {
         </nav>
 
         {/* ── User footer ───────────────────────────────────────── */}
-        <div
-          style={{
-            flexShrink: 0,
-            padding:    '10px 8px',
-            borderTop:  '1px solid var(--border)',
-          }}
-        >
-          <div
-            style={{
-              display:        'flex',
-              alignItems:     'center',
-              gap:            10,
-              padding:        '8px 8px',
-              borderRadius:   10,
-              background:     'rgba(255,255,255,0.025)',
-              justifyContent: collapsed ? 'center' : undefined,
-            }}
-          >
-            {/* Avatar */}
-            <div
-              style={{
-                width:        30,
-                height:       30,
-                borderRadius: 8,
-                background:   'linear-gradient(135deg, #6366f1, #10b981)',
-                display:      'flex',
-                alignItems:   'center',
-                justifyContent: 'center',
-                fontSize:     11,
-                fontWeight:   700,
-                color:        '#fff',
-                flexShrink:   0,
-                letterSpacing: '0.04em',
-              }}
-            >
-              {initials}
-            </div>
-            {!collapsed && user && (
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {user.name || 'User'}
-                </p>
-                <p style={{ fontSize: 10, color: 'var(--text-muted)', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {user.email}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
+       
       </aside>
     </>
   )
