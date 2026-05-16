@@ -5,8 +5,6 @@
 Backend/target/
 Backend/*.log
 
-# Spring Boot secrets
-Backend/src/main/resources/application.properties
 
 # =========================
 # FRONTEND
