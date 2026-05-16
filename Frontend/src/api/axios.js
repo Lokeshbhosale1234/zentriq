@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: 'https://zentriq-backend.onrender.com/api',
 
   // 30 seconds
   timeout: 30000,
