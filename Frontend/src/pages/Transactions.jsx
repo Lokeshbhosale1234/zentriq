@@ -20,11 +20,12 @@ export default function Transactions() {
   const [type,        setType]        = useState('')
   const [dateFrom,    setDateFrom]    = useState('')
   const [dateTo,      setDateTo]      = useState('')
-  const [minAmount,   setMinAmount]   = useState('')
+  const [minAmount,   setMinAmount]   = useState('')  
   const [maxAmount,   setMaxAmount]   = useState('')
-  const [showFilters, setShowFilters] = useState(false)
-  const [filterLoading, setFilterLoading] = useState(false)
-  const [filtered,    setFiltered]    = useState(null)
+ const [showFilters, setShowFilters] = useState(false)
+const [filterLoading, setFilterLoading] = useState(false)
+const [refreshing, setRefreshing] = useState(false)
+const [filtered,    setFiltered]    = useState(null)
 
   const hasActiveFilters = search || category || type || dateFrom || dateTo || minAmount || maxAmount
 
@@ -54,6 +55,22 @@ export default function Transactions() {
     setDateFrom(''); setDateTo(''); setMinAmount(''); setMaxAmount('')
     setFiltered(null)
   }
+  const handleRefresh = async () => {
+  try {
+    setRefreshing(true)
+
+    await refetch()
+
+    if (hasActiveFilters) {
+      await applyFilters()
+    }
+
+  } catch (err) {
+    console.error('Refresh failed:', err)
+  } finally {
+    setRefreshing(false)
+  }
+}
 
   const displayData = filtered !== null ? filtered : transactions
   const income      = displayData.filter(t => t.type === 'CREDIT').reduce((s, t) => s + parseFloat(t.amount), 0)
@@ -170,6 +187,37 @@ export default function Transactions() {
                 ✕ Clear
               </button>
             )}
+            <button
+  type="button"
+  onClick={handleRefresh}
+  disabled={refreshing}
+  className="btn btn-ghost refresh-btn"
+  style={{
+    padding: '6px 12px',
+    fontSize: 12,
+    gap: 6,
+    opacity: refreshing ? 0.7 : 1,
+    cursor: refreshing ? 'not-allowed' : 'pointer',
+  }}
+>
+  <svg
+    className={refreshing ? 'animate-spin-custom' : ''}
+    width="11"
+    height="11"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.2"
+    strokeLinecap="round"
+  >
+    <path d="M21 2v6h-6"/>
+    <path d="M3 12a9 9 0 0115-6.7L21 8"/>
+    <path d="M3 22v-6h6"/>
+    <path d="M21 12a9 9 0 01-15 6.7L3 16"/>
+  </svg>
+
+  {refreshing ? 'Refreshing…' : 'Refresh'}
+</button>
             <button
               type="button"
               className="btn btn-ghost"
