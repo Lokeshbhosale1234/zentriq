@@ -10,55 +10,74 @@ import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
 @RestController
 @RequestMapping("/api/ai")
 @RequiredArgsConstructor
 @CrossOrigin
 public class AIController {
 
-    private final GeminiService geminiService;
+        private final GeminiService geminiService;
 
-    private final TransactionService transactionService;
+        private final TransactionService transactionService;
 
     @GetMapping("/insights")
     public String getInsights(Principal principal) {
 
-        /*
-        |--------------------------------------------------------------------------
-        | GET USER TRANSACTIONS
-        |--------------------------------------------------------------------------
-        */
+    /*
+    |--------------------------------------------------------------------------
+    | CHECK AUTHENTICATION
+    |--------------------------------------------------------------------------
+    */
+
+        if (principal == null) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "User not authenticated"
+            );
+        }
+
+    /*
+    |--------------------------------------------------------------------------
+    | GET USER TRANSACTIONS
+    |--------------------------------------------------------------------------
+    */
 
         List<Transaction> transactions =
-                transactionService.getUserTransactions(principal.getName());
+                transactionService.getUserTransactions(
+                        principal.getName()
+                );
 
-        /*
-        |--------------------------------------------------------------------------
-        | BUILD AI PROMPT
-        |--------------------------------------------------------------------------
-        */
+    /*
+    |--------------------------------------------------------------------------
+    | BUILD AI PROMPT
+    |--------------------------------------------------------------------------
+    */
 
         StringBuilder prompt = new StringBuilder();
 
         prompt.append("""
-                Analyze the following financial transactions.
+            Analyze the following financial transactions.
 
-                Provide:
-                1. Spending patterns
-                2. Saving opportunities
-                3. Financial health observations
-                4. Budget recommendations
+            Provide:
+            1. Spending patterns
+            2. Saving opportunities
+            3. Financial health observations
+            4. Budget recommendations
 
-                Keep response concise, practical, and easy to read.
+            Keep response concise, practical, and easy to read.
 
-                Transactions:
-                """);
+            Transactions:
+            """);
 
-        /*
-        |--------------------------------------------------------------------------
-        | APPEND TRANSACTIONS
-        |--------------------------------------------------------------------------
-        */
+    /*
+    |--------------------------------------------------------------------------
+    | APPEND TRANSACTIONS
+    |--------------------------------------------------------------------------
+    */
 
         for (Transaction t : transactions) {
 
@@ -69,7 +88,7 @@ public class AIController {
                             Amount: %s
                             Type: %s
                             Category: %s
-
+    
                             """,
                             t.getTitle(),
                             t.getAmount(),
@@ -79,11 +98,11 @@ public class AIController {
             );
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | GENERATE AI RESPONSE
-        |--------------------------------------------------------------------------
-        */
+    /*
+    |--------------------------------------------------------------------------
+    | GENERATE AI RESPONSE
+    |--------------------------------------------------------------------------
+    */
 
         return geminiService.generateFinancialInsights(
                 prompt.toString()
