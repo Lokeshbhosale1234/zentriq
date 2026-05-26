@@ -301,9 +301,16 @@ public class TransactionService {
                 .build();
     }
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // Current Logged-in User Email
-    // ─────────────────────────────────────────────────────────────────────────────
+    public List<Transaction> getUserTransactions(String email) {
+
+        userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new RuntimeException("User not found")
+                );
+
+        return transactionRepository
+                .findByUserEmailOrderByTransactionDateDesc(email);
+    }
     private String getCurrentUserEmail() {
 
         return SecurityContextHolder
