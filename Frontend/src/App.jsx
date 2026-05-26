@@ -1,9 +1,9 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
 import Insights from './pages/Insights'
 
-// ✅ Global Axios interceptors — must be imported before any API call
+//  Global Axios interceptors — must be imported before any API call
 import './api/axiosSetup'
 
 import { AuthProvider }       from './context/AuthContext'
@@ -42,10 +42,26 @@ function PlaceholderPage({ title, desc }) {
             <line x1="8"  y1="12" x2="16" y2="12"/>
           </svg>
         </div>
-        <h2 className="font-display font-700" style={{ fontSize: 18, letterSpacing: '-0.02em', color: 'var(--text-primary)', marginBottom: 8 }}>
+
+        <h2
+          className="font-display font-700"
+          style={{
+            fontSize: 18,
+            letterSpacing: '-0.02em',
+            color: 'var(--text-primary)',
+            marginBottom: 8
+          }}
+        >
           {title}
         </h2>
-        <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{desc}</p>
+
+        <p style={{
+          fontSize: 13,
+          color: 'var(--text-secondary)',
+          lineHeight: 1.6
+        }}>
+          {desc}
+        </p>
       </div>
     </div>
   )
@@ -53,7 +69,9 @@ function PlaceholderPage({ title, desc }) {
 
 /* ── Inner app — rendered once user is authenticated ─────────────── */
 function AppInner() {
+
   const [showModal, setShowModal] = useState(false)
+
   const { addTransaction, refetch } = useTransactions()
 
   const handleAdd = async (payload) => {
@@ -65,13 +83,33 @@ function AppInner() {
     <>
       <Layout onAddTransaction={() => setShowModal(true)}>
         <Routes>
+
           <Route path="/"             element={<Dashboard />} />
           <Route path="/transactions" element={<Transactions />} />
           <Route path="/analytics"    element={<Analytics />} />
           <Route path="/budgets"      element={<BudgetsPage />} />
           <Route path="/ai"           element={<Insights />} />
-          <Route path="/payment"      element={<PlaceholderPage title="Payments"     desc="Coming soon — integrated payment processing, transfers, and bill scheduling." />} />
-          <Route path="*"             element={<PlaceholderPage title="404 — Page Not Found" desc="The page you're looking for doesn't exist or has been moved." />} />
+
+          <Route
+            path="/payment"
+            element={
+              <PlaceholderPage
+                title="Payments"
+                desc="Coming soon — integrated payment processing, transfers, and bill scheduling."
+              />
+            }
+          />
+
+          <Route
+            path="*"
+            element={
+              <PlaceholderPage
+                title="404 — Page Not Found"
+                desc="The page you're looking for doesn't exist or has been moved."
+              />
+            }
+          />
+
         </Routes>
       </Layout>
 
@@ -87,15 +125,37 @@ function AppInner() {
 
 /* ── Root — AuthProvider wraps the entire tree ───────────────────── */
 export default function App() {
+
+  /*
+  |--------------------------------------------------------------------------
+  | BACKEND WAKEUP
+  |--------------------------------------------------------------------------
+  | Wakes Render backend when frontend opens
+  |
+  */
+
+  useEffect(() => {
+
+    fetch('https://zentriq-backend.onrender.com/api/auth/login', {
+      method: 'OPTIONS',
+    }).catch(() => {})
+
+  }, [])
+
   return (
     <BrowserRouter>
+
       <AuthProvider>
+
         <Routes>
+
           {/* Public */}
+
           <Route path="/login"  element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
 
-          {/* Protected — everything else */}
+          {/* Protected */}
+
           <Route
             path="/*"
             element={
@@ -104,8 +164,11 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
         </Routes>
+
       </AuthProvider>
+
     </BrowserRouter>
   )
 }

@@ -3,7 +3,7 @@ import axios from 'axios'
 const api = axios.create({
   baseURL: 'https://zentriq-backend.onrender.com/api',
 
-  // 30 seconds
+  // 30 seconds timeout
   timeout: 30000,
 
   headers: {
@@ -15,11 +15,12 @@ const api = axios.create({
 |--------------------------------------------------------------------------
 | REQUEST INTERCEPTOR
 |--------------------------------------------------------------------------
-| Automatically adds JWT token to every request
+| Automatically attaches JWT token
 |
 */
 
 api.interceptors.request.use(
+
   (config) => {
 
     const token = localStorage.getItem('fintech_jwt')
@@ -39,7 +40,7 @@ api.interceptors.request.use(
 | RESPONSE INTERCEPTOR
 |--------------------------------------------------------------------------
 | Handles:
-| - timeout errors
+| - backend wakeup delays
 | - unauthorized access
 | - general backend errors
 |
@@ -51,14 +52,30 @@ api.interceptors.response.use(
 
   (error) => {
 
-    // Timeout
-    if (error.code === 'ECONNABORTED') {
+    /*
+    |--------------------------------------------------------------------------
+    | BACKEND WAKEUP / TIMEOUT
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+      error.code === 'ECONNABORTED' ||
+      error.message?.includes('timeout')
+    ) {
+
       return Promise.reject(
-        new Error('Server is taking too long to respond')
+        new Error(
+          'Backend server is waking up. Please wait a few seconds and try again.'
+        )
       )
     }
 
-    // Unauthorized
+    /*
+    |--------------------------------------------------------------------------
+    | UNAUTHORIZED
+    |--------------------------------------------------------------------------
+    */
+
     if (error?.response?.status === 401) {
 
       localStorage.removeItem('fintech_jwt')
@@ -69,7 +86,12 @@ api.interceptors.response.use(
       }
     }
 
-    // General backend error
+    /*
+    |--------------------------------------------------------------------------
+    | GENERAL BACKEND ERROR
+    |--------------------------------------------------------------------------
+    */
+
     const message =
       error?.response?.data?.message ||
       error?.message ||
@@ -79,4 +101,4 @@ api.interceptors.response.use(
   }
 )
 
-export default api;
+export default api
