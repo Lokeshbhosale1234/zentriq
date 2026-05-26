@@ -14,82 +14,78 @@ import java.util.Map;
 @Service
 public class GeminiService {
 
-    @Value("${gemini.api.key}")
-    private String apiKey;
+        @Value("${gemini.api.key}")
+        private String apiKey;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+        private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public String generateFinancialInsights(String prompt) {
+        public String generateFinancialInsights(String prompt) {
 
-        try {
+                try {
 
-            String url =
-                    "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key="
-                            + apiKey;
+                        String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key="
+                                        + apiKey;
 
-            RestTemplate restTemplate = new RestTemplate();
+                        RestTemplate restTemplate = new RestTemplate();
 
-            /*
-            |--------------------------------------------------------------------------
-            | REQUEST BODY
-            |--------------------------------------------------------------------------
-            */
+                        /*
+                         * |--------------------------------------------------------------------------
+                         * | REQUEST BODY
+                         * |--------------------------------------------------------------------------
+                         */
 
-            Map<String, Object> textPart = new HashMap<>();
-            textPart.put("text", prompt);
+                        Map<String, Object> textPart = new HashMap<>();
+                        textPart.put("text", prompt);
 
-            Map<String, Object> part = new HashMap<>();
-            part.put("parts", new Object[]{textPart});
+                        Map<String, Object> part = new HashMap<>();
+                        part.put("parts", new Object[] { textPart });
 
-            Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("contents", new Object[]{part});
+                        Map<String, Object> requestBody = new HashMap<>();
+                        requestBody.put("contents", new Object[] { part });
 
-            /*
-            |--------------------------------------------------------------------------
-            | HEADERS
-            |--------------------------------------------------------------------------
-            */
+                        /*
+                         * |--------------------------------------------------------------------------
+                         * | HEADERS
+                         * |--------------------------------------------------------------------------
+                         */
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
+                        HttpHeaders headers = new HttpHeaders();
+                        headers.setContentType(MediaType.APPLICATION_JSON);
 
-            HttpEntity<Map<String, Object>> entity =
-                    new HttpEntity<>(requestBody, headers);
+                        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
-            /*
-            |--------------------------------------------------------------------------
-            | API CALL
-            |--------------------------------------------------------------------------
-            */
+                        /*
+                         * |--------------------------------------------------------------------------
+                         * | API CALL
+                         * |--------------------------------------------------------------------------
+                         */
 
-            ResponseEntity<String> response =
-                    restTemplate.exchange(
-                            url,
-                            HttpMethod.POST,
-                            entity,
-                            String.class
-                    );
+                        ResponseEntity<String> response = restTemplate.exchange(
+                                        url,
+                                        HttpMethod.POST,
+                                        entity,
+                                        String.class);
 
-            /*
-            |--------------------------------------------------------------------------
-            | PARSE GEMINI RESPONSE
-            |--------------------------------------------------------------------------
-            */
+                        /*
+                         * |--------------------------------------------------------------------------
+                         * | PARSE GEMINI RESPONSE
+                         * |--------------------------------------------------------------------------
+                         */
 
-            JsonNode root = objectMapper.readTree(response.getBody());
+                        JsonNode root = objectMapper.readTree(response.getBody());
 
-            return root
-                    .get("candidates")
-                    .get(0)
-                    .get("content")
-                    .get("parts")
-                    .get(0)
-                    .get("text")
-                    .asText();
+                        return root
+                                        .get("candidates")
+                                        .get(0)
+                                        .get("content")
+                                        .get("parts")
+                                        .get(0)
+                                        .get("text")
+                                        .asText();
 
-        } catch (Exception e) {
+                } catch (Exception e) {
 
-            return "AI analysis failed: " + e.getMessage();
+                        return "AI analysis failed: " + e.getMessage();
+                }
         }
-    }
 }
