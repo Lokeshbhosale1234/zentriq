@@ -11,6 +11,8 @@ import java.security.Principal;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import java.util.Map;
 import org.springframework.web.server.ResponseStatusException;
 
 @RestController
@@ -24,7 +26,7 @@ public class AIController {
         private final TransactionService transactionService;
 
     @GetMapping("/insights")
-    public String getInsights(Principal principal) {
+    public ResponseEntity<?> getInsights(Principal principal) {
 
     /*
     |--------------------------------------------------------------------------
@@ -104,8 +106,28 @@ public class AIController {
     |--------------------------------------------------------------------------
     */
 
-        return geminiService.generateFinancialInsights(
-                prompt.toString()
-        );
+        try {
+
+            String insights = geminiService.generateFinancialInsights(
+                    prompt.toString()
+            );
+
+            return ResponseEntity.ok(
+                    Map.of(
+                            "success", true,
+                            "insights", insights
+                    )
+            );
+
+        } catch (Exception e) {
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(
+                            Map.of(
+                                    "success", false,
+                                    "error", "AI service temporarily unavailable"
+                            )
+                    );
+        }
     }
 }
