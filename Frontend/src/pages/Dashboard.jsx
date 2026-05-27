@@ -1,4 +1,5 @@
 import React from 'react'
+import { useEffect, useState } from "react";
 import StatCard           from '../components/dashboard/StatCard'
 import BalanceLineChart   from '../components/dashboard/BalanceLineChart'
 import CategoryPieChart   from '../components/dashboard/CategoryPieChart'
@@ -43,6 +44,51 @@ export default function Dashboard() {
   const { analytics: budgetData, loading: bLoading }                       = useBudgetAnalytics(now.getMonth() + 1, now.getFullYear())
 
   const combinedError = aError || tError
+  const [insights, setInsights] = useState("")
+const [loadingInsights, setLoadingInsights] = useState(false)
+
+const fetchInsights = async () => {
+
+  try {
+
+    setLoadingInsights(true)
+
+    const token = localStorage.getItem("token")
+
+    const response = await fetch(
+      "https://zentriq-backend.onrender.com/api/ai/insights",
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    )
+
+    const data = await response.json()
+
+    if (data.success) {
+
+      setInsights(data.insights)
+
+    } else {
+
+      setInsights(data.error || "Failed to load insights")
+    }
+
+  } catch (error) {
+
+    setInsights("Failed to load AI insights")
+
+  } finally {
+
+    setLoadingInsights(false)
+  }
+}
+ useEffect(() => {
+  fetchInsights()
+}, [])
 
   return (
     <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -104,6 +150,47 @@ export default function Dashboard() {
         <MonthlyBarChart  data={analytics?.monthlyTrend} loading={aLoading} />
         <RecentTransactions transactions={transactions}   loading={tLoading} />
       </div>
+
+      {/* ── AI Insights ───────────────────────────────────────── */}
+
+<div
+  style={{
+    background: 'white',
+    borderRadius: 16,
+    padding: 20,
+    boxShadow: '0 2px 10px rgba(0,0,0,0.06)',
+  }}
+>
+
+  <h2
+    style={{
+      fontSize: 22,
+      fontWeight: 700,
+      marginBottom: 14,
+    }}
+  >
+    AI Financial Insights
+  </h2>
+
+  {loadingInsights ? (
+
+    <p>Loading AI insights...</p>
+
+  ) : (
+
+    <div
+      style={{
+        whiteSpace: 'pre-line',
+        lineHeight: 1.8,
+        color: '#374151',
+      }}
+    >
+      {insights}
+    </div>
+
+  )}
+
+</div>
     </div>
   )
 }
