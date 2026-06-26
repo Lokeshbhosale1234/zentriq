@@ -53,7 +53,7 @@ const fetchInsights = async () => {
 
     setLoadingInsights(true)
 
-    const token = localStorage.getItem("token")
+    const token = localStorage.getItem("fintech_jwt")
 
     const response = await fetch(
       "https://zentriq-backend.onrender.com/api/ai/insights",
