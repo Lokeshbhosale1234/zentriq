@@ -1,6 +1,7 @@
 package com.fintech.insights.service;
 
 import com.fintech.entity.Budget;
+import com.fintech.ai.GeminiService;
 import com.fintech.budget.BudgetRepository;
 import com.fintech.insights.dto.HealthScoreDTO;
 import com.fintech.insights.dto.InsightDTO;
@@ -11,6 +12,7 @@ import com.fintech.entity.TransactionType;
 import com.fintech.repository.TransactionRepository;
 import com.fintech.entity.User;
 import org.springframework.stereotype.Service;
+import com.fintech.ai.GeminiService;
 
 import java.time.LocalDateTime;
 import java.time.YearMonth;
@@ -24,171 +26,197 @@ import java.util.List;
 @Service
 public class InsightService {
 
-    private final InsightEngine engine;
-    private final TransactionRepository transactionRepository;
-    private final BudgetRepository budgetRepository;
+        private final InsightEngine engine;
+        private final TransactionRepository transactionRepository;
+        private final BudgetRepository budgetRepository;
+        private final GeminiService geminiService;
 
-    public InsightService(InsightEngine engine,
-                          TransactionRepository transactionRepository,
-                          BudgetRepository budgetRepository) {
-        this.engine = engine;
-        this.transactionRepository = transactionRepository;
-        this.budgetRepository = budgetRepository;
-    }
+        public InsightService(
+                        InsightEngine engine,
+                        TransactionRepository transactionRepository,
+                        BudgetRepository budgetRepository,
+                        GeminiService geminiService) {
+                this.engine = engine;
+                this.transactionRepository = transactionRepository;
+                this.budgetRepository = budgetRepository;
+                this.geminiService = geminiService;
+        }
 
-    /**
-     * Returns a flat list of insights for the authenticated user.
-     */
-    public List<InsightDTO> getInsights(User user) {
+        /**
+         * Returns a flat list of insights for the authenticated user.
+         */
+        public List<InsightDTO> getInsights(User user) {
 
-        List<Transaction> transactions =
-                transactionRepository.findByUserOrderByTransactionDateDesc(user);
+                List<Transaction> transactions = transactionRepository.findByUserOrderByTransactionDateDesc(user);
 
-        List<Budget> budgets =
-                budgetRepository.findByUserOrderByYearDescMonthDescCategoryAsc(user);
+                List<Budget> budgets = budgetRepository.findByUserOrderByYearDescMonthDescCategoryAsc(user);
 
-        return engine.generateInsights(transactions, budgets);
-    }
+                return engine.generateInsights(transactions, budgets);
+        }
 
-    /**
-     * Returns the financial health score for the authenticated user.
-     */
-    public HealthScoreDTO getHealthScore(User user) {
+        /**
+         * Returns the financial health score for the authenticated user.
+         */
+        public HealthScoreDTO getHealthScore(User user) {
 
-        List<Transaction> transactions =
-                transactionRepository.findByUserOrderByTransactionDateDesc(user);
+                List<Transaction> transactions = transactionRepository.findByUserOrderByTransactionDateDesc(user);
 
-        List<Budget> budgets =
-                budgetRepository.findByUserOrderByYearDescMonthDescCategoryAsc(user);
+                List<Budget> budgets = budgetRepository.findByUserOrderByYearDescMonthDescCategoryAsc(user);
 
-        return engine.computeHealthScore(transactions, budgets);
-    }
+                return engine.computeHealthScore(transactions, budgets);
+        }
 
-    /**
-     * Returns a full summary including health score, all insights,
-     * smart summary paragraph, and aggregate financial metrics.
-     */
-    public InsightSummaryDTO getSummary(User user) {
+        /**
+         * Returns a full summary including health score, all insights,
+         * smart summary paragraph, and aggregate financial metrics.
+         */
+        public InsightSummaryDTO getSummary(User user) {
 
-        List<Transaction> transactions =
-                transactionRepository.findByUserOrderByTransactionDateDesc(user);
+                List<Transaction> transactions = transactionRepository.findByUserOrderByTransactionDateDesc(user);
 
-        List<Budget> budgets =
-                budgetRepository.findByUserOrderByYearDescMonthDescCategoryAsc(user);
+                List<Budget> budgets = budgetRepository.findByUserOrderByYearDescMonthDescCategoryAsc(user);
 
-        YearMonth current = YearMonth.now();
+                YearMonth current = YearMonth.now();
 
-        double income = sumIncomeForMonth(transactions, current);
-        double expenses = sumExpensesForMonth(transactions, current);
+                double income = sumIncomeForMonth(transactions, current);
+                double expenses = sumExpensesForMonth(transactions, current);
 
-        List<InsightDTO> insights =
-                engine.generateInsights(transactions, budgets);
+                List<InsightDTO> insights = engine.generateInsights(transactions, budgets);
 
-        HealthScoreDTO health =
-                engine.computeHealthScore(transactions, budgets);
+                HealthScoreDTO health = engine.computeHealthScore(transactions, budgets);
 
-        String summary =
-                engine.generateSmartSummary(insights, health, income, expenses);
+                StringBuilder prompt = new StringBuilder();
 
-        InsightSummaryDTO dto = new InsightSummaryDTO();
+                prompt.append("""
+                                You are an expert financial advisor.
 
-        dto.setHealthScore(health);
-        dto.setInsights(insights);
-        dto.setSmartSummary(summary);
+                                Analyze the following financial data and provide:
 
-        dto.setTotalIncome(round2(income));
-        dto.setTotalExpenses(round2(expenses));
-        dto.setNetSavings(round2(income - expenses));
+                                1. Spending behaviour
+                                2. Saving opportunities
+                                3. Financial health
+                                4. Budget recommendations
+                                5. One motivational tip
 
-        dto.setSavingsRate(
-                income > 0
-                        ? round2(((income - expenses) / income) * 100.0)
-                        : 0.0
-        );
+                                Keep the response practical, professional and easy to understand.
 
-        dto.setTopCategory(
-                engine.topSpendingCategory(transactions)
-        );
+                                Financial Data:
 
-        dto.setFastestGrowingCategory(
-                engine.fastestGrowingCategory(transactions)
-        );
+                                """);
 
-        return dto;
-    }
+                prompt.append("Total Income: ₹").append(income).append("\n");
+                prompt.append("Total Expenses: ₹").append(expenses).append("\n");
+                prompt.append("Net Savings: ₹").append(income - expenses).append("\n");
+                prompt.append("Health Score: ").append(health.getScore()).append("/100\n\n");
 
-    // ─────────────────────────────────────────────────────────
-    // Private helpers
-    // ─────────────────────────────────────────────────────────
+                prompt.append("Transactions:\n");
 
-    /**
-     * Sums income transactions for the given month.
-     */
-    private double sumIncomeForMonth(
-            List<Transaction> transactions,
-            YearMonth month
-    ) {
+                for (Transaction t : transactions) {
 
-        return transactions.stream()
+                        prompt.append(String.format(
+                                        "Title: %s | Amount: %s | Type: %s | Category: %s%n",
+                                        t.getTitle(),
+                                        t.getAmount(),
+                                        t.getType(),
+                                        t.getCategory()));
+                }
 
-                .filter(t ->
-                        t.getTransactionDate() != null
-                                && inMonth(t.getTransactionDate(), month)
-                )
+                String summary;
 
-                .filter(t ->
-                        t.getType() == TransactionType.CREDIT
-                )
+                try {
 
-                .mapToDouble(t ->
-                        t.getAmount().doubleValue()
-                )
+                        summary = geminiService.generateFinancialInsights(prompt.toString());
 
-                .sum();
-    }
+                } catch (Exception e) {
 
-    /**
-     * Sums expense transactions for the given month.
-     */
-    private double sumExpensesForMonth(
-            List<Transaction> transactions,
-            YearMonth month
-    ) {
+                        summary = engine.generateSmartSummary(
+                                        insights,
+                                        health,
+                                        income,
+                                        expenses);
+                }
 
-        return transactions.stream()
+                InsightSummaryDTO dto = new InsightSummaryDTO();
 
-                .filter(t ->
-                        t.getTransactionDate() != null
-                                && inMonth(t.getTransactionDate(), month)
-                )
+                dto.setHealthScore(health);
+                dto.setInsights(insights);
+                dto.setSmartSummary(summary);
 
-                .filter(t ->
-                        t.getType() == TransactionType.DEBIT
-                )
+                dto.setTotalIncome(round2(income));
+                dto.setTotalExpenses(round2(expenses));
+                dto.setNetSavings(round2(income - expenses));
 
-                .mapToDouble(t ->
-                        t.getAmount().doubleValue()
-                )
+                dto.setSavingsRate(
+                                income > 0
+                                                ? round2(((income - expenses) / income) * 100.0)
+                                                : 0.0);
 
-                .sum();
-    }
+                dto.setTopCategory(
+                                engine.topSpendingCategory(transactions));
 
-    /**
-     * Checks if transaction belongs to the given month.
-     */
-    private boolean inMonth(
-            LocalDateTime date,
-            YearMonth month
-    ) {
+                dto.setFastestGrowingCategory(
+                                engine.fastestGrowingCategory(transactions));
 
-        return YearMonth.from(date).equals(month);
-    }
+                return dto;
+        }
 
-    /**
-     * Rounds to 2 decimal places.
-     */
-    private double round2(double value) {
+        // ─────────────────────────────────────────────────────────
+        // Private helpers
+        // ─────────────────────────────────────────────────────────
 
-        return Math.round(value * 100.0) / 100.0;
-    }
+        /**
+         * Sums income transactions for the given month.
+         */
+        private double sumIncomeForMonth(
+                        List<Transaction> transactions,
+                        YearMonth month) {
+
+                return transactions.stream()
+
+                                .filter(t -> t.getTransactionDate() != null
+                                                && inMonth(t.getTransactionDate(), month))
+
+                                .filter(t -> t.getType() == TransactionType.CREDIT)
+
+                                .mapToDouble(t -> t.getAmount().doubleValue())
+
+                                .sum();
+        }
+
+        /**
+         * Sums expense transactions for the given month.
+         */
+        private double sumExpensesForMonth(
+                        List<Transaction> transactions,
+                        YearMonth month) {
+
+                return transactions.stream()
+
+                                .filter(t -> t.getTransactionDate() != null
+                                                && inMonth(t.getTransactionDate(), month))
+
+                                .filter(t -> t.getType() == TransactionType.DEBIT)
+
+                                .mapToDouble(t -> t.getAmount().doubleValue())
+
+                                .sum();
+        }
+
+        /**
+         * Checks if transaction belongs to the given month.
+         */
+        private boolean inMonth(
+                        LocalDateTime date,
+                        YearMonth month) {
+
+                return YearMonth.from(date).equals(month);
+        }
+
+        /**
+         * Rounds to 2 decimal places.
+         */
+        private double round2(double value) {
+
+                return Math.round(value * 100.0) / 100.0;
+        }
 }
