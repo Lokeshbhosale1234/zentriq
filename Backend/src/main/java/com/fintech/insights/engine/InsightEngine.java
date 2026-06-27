@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+
 import java.time.YearMonth;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -67,6 +67,15 @@ public class InsightEngine {
 
                 insights.addAll(
                                 savingsInsights(transactions, current));
+
+                insights.addAll(
+                                spendingInsights(transactions, current));
+
+                insights.addAll(
+                                investmentInsights(transactions, current));
+
+                insights.addAll(
+                                healthInsights(transactions, current));
 
                 return insights;
         }
@@ -174,7 +183,32 @@ public class InsightEngine {
                         return "N/A";
                 }
 
-                return "N/A";
+                YearMonth current = YearMonth.now();
+                YearMonth previous = current.minusMonths(1);
+
+                Map<String, Double> currentMap = expensesByCategory(transactions, current);
+
+                Map<String, Double> previousMap = expensesByCategory(transactions, previous);
+
+                double highestGrowth = 0;
+                String category = "N/A";
+
+                for (String key : currentMap.keySet()) {
+
+                        double oldValue = previousMap.getOrDefault(key, 0.0);
+
+                        if (oldValue <= 0)
+                                continue;
+
+                        double growth = percentChange(oldValue, currentMap.get(key));
+
+                        if (growth > highestGrowth) {
+                                highestGrowth = growth;
+                                category = capitalize(key);
+                        }
+                }
+
+                return category;
         }
 
         // ─────────────────────────────────────────────────────────
@@ -332,6 +366,110 @@ public class InsightEngine {
                                         savingsRate,
                                         "down",
                                         "📉"));
+                }
+
+                return out;
+        }
+
+        private List<InsightDTO> spendingInsights(
+                        List<Transaction> transactions,
+                        YearMonth month) {
+
+                List<InsightDTO> out = new ArrayList<>();
+
+                Map<String, Double> categories = expensesByCategory(transactions, month);
+
+                if (categories.isEmpty()) {
+                        return out;
+                }
+
+                Map.Entry<String, Double> highest = categories.entrySet()
+                                .stream()
+                                .max(Map.Entry.comparingByValue())
+                                .orElse(null);
+
+                if (highest != null) {
+
+                        out.add(new InsightDTO(
+                                        InsightType.SPENDING_PATTERN,
+                                        "Highest Spending Category",
+                                        String.format(
+                                                        "%s is your highest spending category this month (₹%.0f).",
+                                                        capitalize(highest.getKey()),
+                                                        highest.getValue()),
+                                        "info",
+                                        highest.getKey(),
+                                        highest.getValue(),
+                                        0.0,
+                                        "up",
+                                        "🛒"));
+                }
+
+                return out;
+        }
+
+        private List<InsightDTO> investmentInsights(
+                        List<Transaction> transactions,
+                        YearMonth month) {
+
+                List<InsightDTO> out = new ArrayList<>();
+
+                double income = totalIncome(transactions, month);
+                double expenses = totalExpenses(transactions, month);
+
+                if (income <= 0)
+                        return out;
+
+                double savings = income - expenses;
+                double savingsRate = (savings / income) * 100;
+
+                if (savingsRate >= 30) {
+
+                        out.add(new InsightDTO(
+                                        InsightType.SAVINGS_SUGGESTION,
+                                        "Investment Opportunity",
+                                        String.format(
+                                                        "You currently save ₹%.0f every month. Consider investing part of it through SIPs, PPF or Index Funds.",
+                                                        savings),
+                                        "success",
+                                        "Investment",
+                                        savings,
+                                        savingsRate,
+                                        "up",
+                                        "📈"));
+                }
+
+                return out;
+        }
+
+        private List<InsightDTO> healthInsights(
+                        List<Transaction> transactions,
+                        YearMonth month) {
+
+                List<InsightDTO> out = new ArrayList<>();
+
+                double income = totalIncome(transactions, month);
+                double expenses = totalExpenses(transactions, month);
+
+                if (income <= 0)
+                        return out;
+
+                double expenseRatio = (expenses / income) * 100;
+
+                if (expenseRatio <= 40) {
+
+                        out.add(new InsightDTO(
+                                        InsightType.FINANCIAL_HEALTH,
+                                        "Excellent Cash Flow",
+                                        String.format(
+                                                        "Only %.0f%% of your income is spent each month.",
+                                                        expenseRatio),
+                                        "success",
+                                        "Cash Flow",
+                                        expenses,
+                                        expenseRatio,
+                                        "down",
+                                        "🟢"));
                 }
 
                 return out;
