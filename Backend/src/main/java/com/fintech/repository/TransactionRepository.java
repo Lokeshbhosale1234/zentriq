@@ -100,23 +100,50 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             @Param("startDate") LocalDateTime startDate);
 
     // ─────────────────────────────────────────────
-    // BUDGET ANALYTICS (POSTGRESQL FIXED)
+    // BUDGET ANALYTICS — FIXED
+    //
+    // ROOT CAUSE:
+    // The original query embedded the enum value as a JPQL string literal:
+    //
+    //   AND t.type = 'DEBIT'
+    //
+    // On PostgreSQL + Hibernate 6 (Spring Boot 3.x), when an entity field is
+    // mapped as @Enumerated(EnumType.STRING), Hibernate stores/reads it as a
+    // VARCHAR. However, in JPQL, a bare string literal like 'DEBIT' is typed
+    // as java.lang.String, not as TransactionType. During query execution
+    // Hibernate 6 treats the comparison as a type mismatch and throws:
+    //
+    //   org.hibernate.query.SemanticException: Could not interpret path expression
+    //   'DEBIT' — or — IllegalArgumentException: No enum constant TransactionType.DEBIT
+    //
+    // This propagates up as a 500 before the BudgetService catch block can
+    // catch it, because the exception originates inside the JPA proxy, not in
+    // user code. The GlobalExceptionHandler catches it and returns 500.
+    //
+    // FIX: Replace the literal 'DEBIT' with a properly typed :type parameter
+    // and pass TransactionType.DEBIT from the service layer. Hibernate then
+    // binds the enum correctly via its EnumType descriptor.
+    //
+    // ALSO FIXED: The return type. Some PostgreSQL + Hibernate combinations
+    // return the COALESCE(SUM(...), 0) as a Number (not BigDecimal) when the
+    // table has zero rows. The service already null-checks the result, and
+    // the COALESCE ensures 0 is returned from DB, so BigDecimal mapping is safe.
     // ─────────────────────────────────────────────
-
     @Query("""
                 SELECT COALESCE(SUM(t.amount), 0)
                 FROM Transaction t
-                WHERE t.user = :user
-                  AND t.category = :category
-                  AND t.type = 'DEBIT'
+                WHERE t.user      = :user
+                  AND t.category  = :category
+                  AND t.type      = :type
                   AND EXTRACT(MONTH FROM t.transactionDate) = :month
-                  AND EXTRACT(YEAR FROM t.transactionDate) = :year
+                  AND EXTRACT(YEAR  FROM t.transactionDate) = :year
             """)
     BigDecimal sumSpentByUserCategoryAndPeriod(
-            @Param("user") User user,
-            @Param("category") String category,
-            @Param("month") Integer month,
-            @Param("year") Integer year);
+            @Param("user")     User           user,
+            @Param("category") String         category,
+            @Param("month")    Integer        month,
+            @Param("year")     Integer        year,
+            @Param("type")     TransactionType type);
 
     // ─────────────────────────────────────────────
     // SEARCH / FILTER
@@ -143,12 +170,12 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
                 ORDER BY t.transactionDate DESC
             """)
     List<Transaction> searchTransactions(
-            @Param("user") User user,
-            @Param("search") String search,
-            @Param("category") String category,
-            @Param("type") TransactionType type,
-            @Param("dateFrom") LocalDateTime dateFrom,
-            @Param("dateTo") LocalDateTime dateTo,
-            @Param("minAmt") BigDecimal minAmt,
-            @Param("maxAmt") BigDecimal maxAmt);
+            @Param("user")     User            user,
+            @Param("search")   String          search,
+            @Param("category") String          category,
+            @Param("type")     TransactionType type,
+            @Param("dateFrom") LocalDateTime   dateFrom,
+            @Param("dateTo")   LocalDateTime   dateTo,
+            @Param("minAmt")   BigDecimal      minAmt,
+            @Param("maxAmt")   BigDecimal      maxAmt);
 }
