@@ -1,26 +1,16 @@
 import React from 'react'
-import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
-  CartesianGrid, Tooltip, Legend, Cell,
-} from 'recharts'
-import { formatMonth } from '../../utils/formatters'
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell } from 'recharts'
 
-const ChartTooltip = ({ active, payload, label }) => {
+const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null
   return (
-    <div className="tooltip-base" style={{ minWidth: 160 }}>
-      <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>
-        {formatMonth(label)}
-      </p>
-      {payload.map(p => (
-        <div key={p.dataKey} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 4 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ width: 6, height: 6, borderRadius: 2, background: p.fill, display: 'inline-block' }} />
-            <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{p.name}</span>
-          </div>
-          <span style={{ fontSize: 12, fontWeight: 700, fontFamily: 'JetBrains Mono, monospace', color: 'var(--text-primary)' }}>
-            ${Number(p.value).toLocaleString('en-US', { minimumFractionDigits: 0 })}
-          </span>
+    <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 14px', boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}>
+      <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, fontWeight: 600 }}>{label}</p>
+      {payload.map((p, i) => (
+        <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 3 }}>
+          <div style={{ width: 8, height: 8, borderRadius: 2, background: p.fill }} />
+          <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{p.name}:</span>
+          <span className="font-mono" style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-primary)' }}>₹{(p.value||0).toLocaleString('en-IN')}</span>
         </div>
       ))}
     </div>
@@ -28,55 +18,41 @@ const ChartTooltip = ({ active, payload, label }) => {
 }
 
 export default function MonthlyBarChart({ data, loading }) {
-  if (loading) {
-    return (
-      <div className="card" style={{ padding: '20px 22px', minHeight: 296 }}>
-        <div className="skeleton" style={{ width: 160, height: 14, marginBottom: 6 }} />
-        <div className="skeleton" style={{ width: 220, height: 10, marginBottom: 24 }} />
-        <div className="skeleton" style={{ width: '100%', height: 200, borderRadius: 12 }} />
-      </div>
-    )
-  }
+  if (loading) return (
+    <div className="card" style={{ padding: 20, minHeight: 240 }}>
+      <div className="skeleton" style={{ width: 140, height: 12, marginBottom: 24 }} />
+      <div className="skeleton" style={{ height: 170, borderRadius: 10 }} />
+    </div>
+  )
 
-  const chartData = (data || []).map(d => ({
-    ...d,
-    income:  parseFloat(d.income)  || 0,
-    expense: parseFloat(d.expense) || 0,
+  const formatted = (data || []).map(d => ({
+    month: d.month?.slice(0, 3) || d.month,
+    income: d.income || 0,
+    expense: d.expense || 0,
+    net: (d.income || 0) - (d.expense || 0),
   }))
 
   return (
-    <div className="card" style={{ padding: '20px 22px', overflow: 'hidden' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
-        <div>
-          <h3 className="font-display font-700" style={{ fontSize: 14, letterSpacing: '-0.02em', color: 'var(--text-primary)', marginBottom: 3 }}>
-            Monthly Comparison
-          </h3>
-          <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>Side-by-side income & expense</p>
+    <div className="card" style={{ padding: 20 }}>
+      <div className="section-header">
+        <p className="section-title">Monthly Overview</p>
+        <div style={{ display: 'flex', gap: 12 }}>
+          {[{ label: 'Income', color: '#6366f1' }, { label: 'Expense', color: '#f43f5e' }].map(l => (
+            <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <div style={{ width: 10, height: 4, borderRadius: 2, background: l.color }} />
+              <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600 }}>{l.label}</span>
+            </div>
+          ))}
         </div>
-        <span className="badge badge-purple">6M</span>
       </div>
-
-      <ResponsiveContainer width="100%" height={218}>
-        <BarChart data={chartData} margin={{ top: 4, right: 2, left: -24, bottom: 0 }} barCategoryGap="30%">
-          <CartesianGrid strokeDasharray="0" vertical={false} />
-          <XAxis
-            dataKey="month"
-            tickFormatter={formatMonth}
-            tick={{ fontSize: 10 }}
-            axisLine={false}
-            tickLine={false}
-            dy={8}
-          />
-          <YAxis
-            tick={{ fontSize: 10 }}
-            axisLine={false}
-            tickLine={false}
-            tickFormatter={v => v >= 1000 ? `$${(v / 1000).toFixed(0)}k` : `$${v}`}
-          />
-          <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(255,255,255,0.025)' }} />
-          <Legend iconType="square" iconSize={7} wrapperStyle={{ fontSize: 11, paddingTop: 14 }} />
-          <Bar dataKey="income"  name="Income"  fill="#10b981" radius={[3, 3, 0, 0]} maxBarSize={36} />
-          <Bar dataKey="expense" name="Expense" fill="#6366f1" radius={[3, 3, 0, 0]} maxBarSize={36} />
+      <ResponsiveContainer width="100%" height={180}>
+        <BarChart data={formatted} barGap={4} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+          <XAxis dataKey="month" tick={{ fontSize: 10, fill: 'var(--text-muted)', fontWeight: 600 }} axisLine={false} tickLine={false} dy={6} />
+          <YAxis tick={{ fontSize: 10, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} tickFormatter={v => `₹${(v/1000).toFixed(0)}k`} />
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+          <Bar dataKey="income" name="Income" fill="#6366f1" radius={[4,4,0,0]} maxBarSize={28} />
+          <Bar dataKey="expense" name="Expense" fill="#f43f5e" radius={[4,4,0,0]} maxBarSize={28} />
         </BarChart>
       </ResponsiveContainer>
     </div>
