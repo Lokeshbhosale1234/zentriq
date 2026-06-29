@@ -114,10 +114,33 @@ export default function Dashboard() {
       {/* ── Health Score + Budget Overview ────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16 }} className="lg:grid-cols-5">
         <div className="lg:col-span-2">
+
           <HealthScoreWidget
-            score={insightData?.healthScore?.overallScore ?? insightData?.healthScore ?? 72}
-            loading={insightLoading}
-          />
+  score={insightData?.healthScore?.score ?? 72}
+  breakdown={[
+    {
+      label: "Savings Rate",
+      value: insightData?.healthScore?.savingsRatio ?? 0,
+      color: "#10b981",
+    },
+    {
+      label: "Budget Adherence",
+      value: insightData?.healthScore?.budgetAdherence ?? 0,
+      color: "#6366f1",
+    },
+    {
+      label: "Expense Control",
+      value: insightData?.healthScore?.spendingStability ?? 0,
+      color: "#22d3ee",
+    },
+    {
+      label: "Overspending",
+      value: insightData?.healthScore?.overspendingPenalty ?? 0,
+      color: "#ef4444",
+    },
+  ]}
+  loading={insightLoading}
+/>
         </div>
         <div className="lg:col-span-3">
           <BudgetOverviewBar analytics={budgetData} loading={bLoading} />
