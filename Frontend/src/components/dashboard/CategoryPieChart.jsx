@@ -16,23 +16,75 @@ const CustomTooltip = ({ active, payload }) => {
   )
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// normaliseData — THE CORE FIX
+// ─────────────────────────────────────────────────────────────────────────────
+// The backend AnalyticsDTO.categoryBreakdown is a Map<String, BigDecimal>.
+// Jackson serialises this to a JSON OBJECT:
+//   { "Food & Dining": 1200.00, "Transport": 450.00, ... }
+//
+// The old code did:
+//   const total = (data || []).reduce(...)
+//
+// When `data` is that object (truthy), `(data || [])` evaluates to the object
+// itself — not []. Plain objects do not have .reduce(), so JS throws:
+//   TypeError: (e || []).reduce is not a function
+//
+// FIX: detect whether data is an array or an object and normalise to the
+// array shape that the rest of the component expects.
+// ─────────────────────────────────────────────────────────────────────────────
+function normaliseData(data) {
+  if (!data) return []
+
+  // Already an array (e.g. [{ category: "Food", amount: 1200 }, ...])
+  if (Array.isArray(data)) return data
+
+  // Object shape from backend: { "Food": 1200, "Transport": 450 }
+  if (typeof data === 'object') {
+    return Object.entries(data).map(([category, amount]) => ({
+      category,
+      amount: parseFloat(amount) || 0,
+    }))
+  }
+
+  return []
+}
+
 export default function CategoryPieChart({ data, loading }) {
   const [active, setActive] = useState(null)
 
   if (loading) return (
     <div className="card" style={{ padding: 20, minHeight: 260 }}>
       <div className="skeleton" style={{ width: 120, height: 12, marginBottom: 24 }} />
-      <div style={{ display: 'flex', justifyContent: 'center' }}><div className="skeleton" style={{ width: 140, height: 140, borderRadius: '50%' }} /></div>
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <div className="skeleton" style={{ width: 140, height: 140, borderRadius: '50%' }} />
+      </div>
     </div>
   )
 
-  const total = (data || []).reduce((s, d) => s + (d.amount || d.value || 0), 0)
-  const formatted = (data || []).map((d, i) => ({
-    name: d.category || d.name,
-    value: d.amount || d.value || 0,
+  // Normalise before any array operations — no more crash
+  const items = normaliseData(data)
+
+  const total = items.reduce((s, d) => s + (d.amount || d.value || 0), 0)
+
+  const formatted = items.map((d, i) => ({
+    name:    d.category || d.name,
+    value:   d.amount   || d.value || 0,
     percent: total ? ((d.amount || d.value || 0) / total * 100) : 0,
-    fill: COLORS[i % COLORS.length],
+    fill:    COLORS[i % COLORS.length],
   }))
+
+  if (formatted.length === 0) return (
+    <div className="card" style={{ padding: 20 }}>
+      <div className="section-header">
+        <p className="section-title">Category Breakdown</p>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '30px 0', gap: 8 }}>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>No expense data yet</p>
+        <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>Add transactions to see breakdown</p>
+      </div>
+    </div>
+  )
 
   return (
     <div className="card" style={{ padding: 20 }}>
@@ -49,8 +101,12 @@ export default function CategoryPieChart({ data, loading }) {
             onMouseLeave={() => setActive(null)}
           >
             {formatted.map((entry, i) => (
-              <Cell key={i} fill={entry.fill} opacity={active === null || active === i ? 1 : 0.4}
-                stroke="transparent" style={{ transition: 'opacity 0.15s' }} />
+              <Cell
+                key={i} fill={entry.fill}
+                opacity={active === null || active === i ? 1 : 0.4}
+                stroke="transparent"
+                style={{ transition: 'opacity 0.15s' }}
+              />
             ))}
           </Pie>
           <Tooltip content={<CustomTooltip />} />

@@ -197,7 +197,7 @@ public class TransactionService {
         // ── Category Breakdown ────────────────────────────────────────────────
 
         List<Object[]> categoryData =
-                transactionRepository.findCategoryBreakdownByUser(user);
+                transactionRepository.findCategoryBreakdownByUser(user, TransactionType.DEBIT);
 
         Map<String, BigDecimal> categoryBreakdown =
                 new LinkedHashMap<>();

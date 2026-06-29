@@ -11,13 +11,18 @@ export const budgetApi = {
   // GET budget analytics
   getAnalytics: async (month, year) => {
     const params = {}
-
     if (month) params.month = month
-    if (year) params.year = year
+    if (year)  params.year  = year
 
-    const res = await api.get('/budgets/analytics', { params })
+    const res  = await api.get('/budgets/analytics', { params })
+    const data = res.data?.data
 
-    return res.data.data
+    // Guard: backend must return an array.
+    // If it returns null (no budgets) or an object (error shape), return []
+    // so every consumer downstream always gets a safe empty array.
+    if (!Array.isArray(data)) return []
+
+    return data
   },
 
   // CREATE budget
