@@ -405,3 +405,42 @@ body {
 .truncate        { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .flex-center     { display: flex; align-items: center; justify-content: center; }
 .flex-between    { display: flex; align-items: center; justify-content: space-between; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   MODAL SYSTEM
+   Root cause of modal appearing at bottom: these classes were missing.
+   The modal-backdrop must be position:fixed so it covers the entire
+   viewport regardless of scroll position. Without this, it renders
+   as a normal block element inside the page flow — at the bottom.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.modal-backdrop {
+  position: fixed;           /* cover the full viewport — not inline */
+  inset: 0;                  /* top:0 right:0 bottom:0 left:0        */
+  z-index: 1000;             /* above sidebar (z:50) and topbar (z:30) */
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeIn 0.18s ease both;
+}
+
+.modal-sheet {
+  background: var(--bg-elevated);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90dvh;
+  overflow-y: auto;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7), 0 4px 16px rgba(0, 0, 0, 0.5);
+  animation: scaleIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  scrollbar-width: thin;
+}
+
+/* Prevent body scroll when modal is open */
+body:has(.modal-backdrop) {
+  overflow: hidden;
+}

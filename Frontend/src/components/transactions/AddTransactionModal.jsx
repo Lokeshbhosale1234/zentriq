@@ -190,7 +190,7 @@ export default function AddTransactionModal({ onClose, onSubmit }) {
               Amount *
             </label>
             <div style={{ position: 'relative' }}>
-              <span style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: 'var(--text-muted)', userSelect: 'none' }}>$</span>
+              <span style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: 'var(--text-muted)', userSelect: 'none' }}>₹</span>
               <input
                 className="input"
                 style={{ paddingLeft: 26 }}
