@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
+import React, { useState, useEffect, useRef } from 'react'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 
 const NAV = [
@@ -40,7 +40,6 @@ const SOON = [
 /* ── Arvexa Wordmark Logo ───────────────────────────────────────── */
 const ArvexaLogo = ({ collapsed }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-    {/* Icon — 3×3 grid dots, white */}
     <div style={{
       width: 28, height: 28, display: 'grid',
       gridTemplateColumns: 'repeat(3,1fr)', gap: 3, flexShrink: 0,
@@ -61,12 +60,32 @@ const ArvexaLogo = ({ collapsed }) => (
   </div>
 )
 
+/* ── Account popover icons ────────────────────────────────────────── */
+const IconUser = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+const IconBilling = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+const IconBell = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+const IconLogout = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+
 export default function Sidebar({ mobileOpen, onMobileClose }) {
   const [collapsed, setCollapsed] = useState(false)
+  const [showAccountMenu, setShowAccountMenu] = useState(false)
   const { user, logout } = useAuth()
   const location = useLocation()
+  const navigate = useNavigate()
+  const accountRef = useRef(null)
 
   useEffect(() => { onMobileClose?.() }, [location.pathname])
+
+  // Close account popover on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (accountRef.current && !accountRef.current.contains(e.target)) {
+        setShowAccountMenu(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
 
   const initials = user?.name
     ? user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
@@ -176,15 +195,66 @@ export default function Sidebar({ mobileOpen, onMobileClose }) {
           </div>
         </nav>
 
-        {/* ── User ────────────────────────────────────────────────── */}
-        <div style={{ padding: '10px 8px', borderTop: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 9,
-            padding: '9px 10px', borderRadius: 9,
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.06)',
-            overflow: 'hidden',
-          }}>
+        {/* ── Account section — Efferd-style popover ───────────────── */}
+        <div
+          ref={accountRef}
+          style={{ position: 'relative', padding: '10px 8px', borderTop: '1px solid rgba(255,255,255,0.05)', flexShrink: 0 }}
+        >
+          {/* Popover menu — opens upward, above the trigger */}
+          {showAccountMenu && (
+            <div className="account-popover" role="menu">
+              {/* User identity header inside popover */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px 10px', borderBottom: '1px solid var(--border-subtle)', marginBottom: 4 }}>
+                <div style={{
+                  width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                  background: '#222222', border: '1px solid rgba(255,255,255,0.12)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 12, fontWeight: 800, color: '#ffffff',
+                }}>
+                  {initials}
+                </div>
+                <div style={{ minWidth: 0, overflow: 'hidden' }}>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: '#ffffff' }} className="truncate">{user?.name || 'User'}</p>
+                  <p style={{ fontSize: 11, color: '#555555' }} className="truncate">{user?.email || ''}</p>
+                </div>
+              </div>
+
+              <div className="account-popover-item" role="menuitem">
+                <IconUser /> Account
+              </div>
+              <div className="account-popover-item" role="menuitem">
+                <IconBilling /> Billing
+              </div>
+              <div className="account-popover-item" role="menuitem">
+                <IconBell /> Notifications
+              </div>
+
+              <div style={{ height: 1, background: 'var(--border-subtle)', margin: '4px 6px' }} />
+
+              <div
+                className="account-popover-item danger"
+                role="menuitem"
+                onClick={() => { setShowAccountMenu(false); logout() }}
+              >
+                <IconLogout /> Log out
+              </div>
+            </div>
+          )}
+
+          {/* Trigger — avatar + name + email, click toggles popover */}
+          <button
+            onClick={() => setShowAccountMenu(p => !p)}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: 9,
+              padding: '9px 10px', borderRadius: 9,
+              background: showAccountMenu ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.06)',
+              overflow: 'hidden', cursor: 'pointer', textAlign: 'left',
+              transition: 'background 0.14s ease',
+            }}
+            aria-haspopup="menu"
+            aria-expanded={showAccountMenu}
+          >
             <div style={{
               width: 30, height: 30, borderRadius: 7, flexShrink: 0,
               background: '#222222', border: '1px solid rgba(255,255,255,0.12)',
@@ -203,19 +273,12 @@ export default function Sidebar({ mobileOpen, onMobileClose }) {
                     {user?.email || ''}
                   </p>
                 </div>
-                <button
-                  onClick={logout}
-                  className="btn-icon"
-                  style={{ width: 26, height: 26, padding: 0, flexShrink: 0, border: 'none' }}
-                  aria-label="Sign out"
-                >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
-                  </svg>
-                </button>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#555555" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }}>
+                  <polyline points="18 15 12 9 6 15" />
+                </svg>
               </>
             )}
-          </div>
+          </button>
         </div>
       </aside>
     </>

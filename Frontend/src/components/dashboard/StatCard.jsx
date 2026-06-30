@@ -1,17 +1,32 @@
 import React from 'react'
 import { formatCurrency } from '../../utils/formatters'
 
+// ─────────────────────────────────────────────────────────────────────────────
+// COLOR_MAP — restricted palette
+// ─────────────────────────────────────────────────────────────────────────────
+// Previously this had 6 colors (green, red, purple, cyan, amber, violet) used
+// across the dashboard, which made the UI look busy compared to the reference
+// (Efferd) design — which is almost entirely monochrome (white/gray/black)
+// with color reserved ONLY for actual gain (green) / loss (red) signals.
+//
+// "purple", "cyan", "violet" now all resolve to the same neutral "mono" style
+// so any card using them automatically becomes monochrome without needing to
+// touch every call site.
+// ─────────────────────────────────────────────────────────────────────────────
 const COLOR_MAP = {
-  green:  { bg: 'rgba(16,185,129,0.08)',  accent: '#10b981', glow: 'rgba(16,185,129,0.2)',  bar: 'linear-gradient(90deg,#10b981,#34d399)', border: 'rgba(16,185,129,0.15)' },
-  red:    { bg: 'rgba(244,63,94,0.08)',   accent: '#f43f5e', glow: 'rgba(244,63,94,0.2)',   bar: 'linear-gradient(90deg,#f43f5e,#fb7185)',  border: 'rgba(244,63,94,0.15)'  },
-  purple: { bg: 'rgba(99,102,241,0.1)',   accent: '#6366f1', glow: 'rgba(99,102,241,0.22)', bar: 'linear-gradient(90deg,#6366f1,#818cf8)',  border: 'rgba(99,102,241,0.18)' },
-  cyan:   { bg: 'rgba(34,211,238,0.08)',  accent: '#22d3ee', glow: 'rgba(34,211,238,0.2)',  bar: 'linear-gradient(90deg,#22d3ee,#67e8f9)',  border: 'rgba(34,211,238,0.15)' },
-  amber:  { bg: 'rgba(245,158,11,0.08)',  accent: '#f59e0b', glow: 'rgba(245,158,11,0.2)',  bar: 'linear-gradient(90deg,#f59e0b,#fcd34d)',  border: 'rgba(245,158,11,0.15)' },
-  violet: { bg: 'rgba(168,85,247,0.08)',  accent: '#a855f7', glow: 'rgba(168,85,247,0.22)', bar: 'linear-gradient(90deg,#a855f7,#c084fc)',  border: 'rgba(168,85,247,0.18)' },
+  green: { bg: 'rgba(34,197,94,0.08)', accent: '#22c55e', glow: 'rgba(34,197,94,0.16)', bar: '#22c55e', border: 'rgba(34,197,94,0.18)' },
+  red:   { bg: 'rgba(239,68,68,0.08)', accent: '#ef4444', glow: 'rgba(239,68,68,0.16)', bar: '#ef4444', border: 'rgba(239,68,68,0.18)' },
+  mono:  { bg: 'rgba(255,255,255,0.05)', accent: '#ffffff', glow: 'rgba(255,255,255,0.08)', bar: 'rgba(255,255,255,0.18)', border: 'rgba(255,255,255,0.1)' },
+
+  // Legacy aliases — kept so existing call sites (Dashboard.jsx etc.) don't break.
+  purple: { bg: 'rgba(255,255,255,0.05)', accent: '#ffffff', glow: 'rgba(255,255,255,0.08)', bar: 'rgba(255,255,255,0.18)', border: 'rgba(255,255,255,0.1)' },
+  cyan:   { bg: 'rgba(255,255,255,0.05)', accent: '#ffffff', glow: 'rgba(255,255,255,0.08)', bar: 'rgba(255,255,255,0.18)', border: 'rgba(255,255,255,0.1)' },
+  amber:  { bg: 'rgba(255,255,255,0.05)', accent: '#ffffff', glow: 'rgba(255,255,255,0.08)', bar: 'rgba(255,255,255,0.18)', border: 'rgba(255,255,255,0.1)' },
+  violet: { bg: 'rgba(255,255,255,0.05)', accent: '#ffffff', glow: 'rgba(255,255,255,0.08)', bar: 'rgba(255,255,255,0.18)', border: 'rgba(255,255,255,0.1)' },
 }
 
-export default function StatCard({ title, value, icon, color = 'purple', prefix = '₹', loading, trend, trendLabel, subtitle }) {
-  const c = COLOR_MAP[color] || COLOR_MAP.purple
+export default function StatCard({ title, value, icon, color = 'mono', prefix = '₹', loading, trend, trendLabel, subtitle }) {
+  const c = COLOR_MAP[color] || COLOR_MAP.mono
 
   if (loading) {
     return (
@@ -32,26 +47,17 @@ export default function StatCard({ title, value, icon, color = 'purple', prefix 
 
   return (
     <div className="card card-hover" style={{ padding: '20px', position: 'relative', overflow: 'hidden', minHeight: 120 }}>
-      {/* Top glow */}
       <div aria-hidden style={{
         position: 'absolute', top: -30, right: -30, width: 100, height: 100,
         borderRadius: '50%', background: `radial-gradient(circle, ${c.glow} 0%, transparent 70%)`,
         pointerEvents: 'none',
       }} />
-      {/* Shine */}
-      <div aria-hidden style={{
-        position: 'absolute', inset: 0,
-        background: 'linear-gradient(135deg, rgba(255,255,255,0.025) 0%, transparent 60%)',
-        borderRadius: 'inherit', pointerEvents: 'none',
-      }} />
 
-      {/* Icon + trend row */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14, position: 'relative' }}>
         <div style={{
           width: 40, height: 40, borderRadius: 11,
           background: c.bg, color: c.accent,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: `0 0 16px ${c.glow}`,
           border: `1px solid ${c.border}`,
         }}>
           {icon}
@@ -63,12 +69,10 @@ export default function StatCard({ title, value, icon, color = 'purple', prefix 
         )}
       </div>
 
-      {/* Label */}
       <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 5, position: 'relative' }}>
         {title}
       </p>
 
-      {/* Value */}
       <p className="font-mono animate-count-up" style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--text-primary)', lineHeight: 1.2, position: 'relative' }}>
         {displayValue}
       </p>
@@ -79,7 +83,6 @@ export default function StatCard({ title, value, icon, color = 'purple', prefix 
         </p>
       )}
 
-      {/* Bottom accent */}
       <div className="stat-accent-bar" aria-hidden style={{ background: c.bar }} />
     </div>
   )

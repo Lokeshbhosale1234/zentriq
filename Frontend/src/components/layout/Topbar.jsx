@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
-import { useAuth } from '../../context/AuthContext'
 
 const PAGE_TITLES = {
   '/':             { title: 'Overview',      sub: 'Your financial overview' },
@@ -20,7 +19,6 @@ const NOTIFS = [
 
 export default function Topbar({ onAddTransaction, onMobileMenuToggle }) {
   const location = useLocation()
-  const { user } = useAuth()
   const [showNotifs, setShowNotifs] = useState(false)
   const [notifs, setNotifs] = useState(NOTIFS)
   const notifRef = useRef(null)
@@ -140,15 +138,6 @@ export default function Topbar({ onAddTransaction, onMobileMenuToggle }) {
         )}
       </div>
 
-      {/* User avatar */}
-      <div style={{
-        width: 30, height: 30, borderRadius: 7, flexShrink: 0,
-        background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.12)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 11, fontWeight: 800, color: '#ffffff', cursor: 'pointer',
-      }} title={user?.name}>
-        {user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'A'}
-      </div>
     </header>
   )
 }
