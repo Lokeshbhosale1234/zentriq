@@ -1,114 +1,87 @@
 import React, { useEffect, useState } from 'react'
 
-const SCORE_COLORS = {
-  excellent: { color: '#10b981', label: 'Excellent', bg: 'rgba(16,185,129,0.08)' },
-  good:      { color: '#6366f1', label: 'Good',      bg: 'rgba(99,102,241,0.08)' },
-  fair:      { color: '#f59e0b', label: 'Fair',      bg: 'rgba(245,158,11,0.08)' },
-  poor:      { color: '#f43f5e', label: 'Needs Work',bg: 'rgba(244,63,94,0.08)'  },
-}
-
 function getScoreConfig(score) {
-  if (score >= 80) return SCORE_COLORS.excellent
-  if (score >= 60) return SCORE_COLORS.good
-  if (score >= 40) return SCORE_COLORS.fair
-  return SCORE_COLORS.poor
+  if (score >= 80) return { color: '#22c55e', label: 'Excellent' }
+  if (score >= 60) return { color: '#ffffff', label: 'Good'      }
+  if (score >= 40) return { color: '#f59e0b', label: 'Fair'      }
+  return              { color: '#ef4444', label: 'Needs Work' }
 }
 
 export default function HealthScoreWidget({ score = 72, breakdown, loading }) {
   const [animatedScore, setAnimatedScore] = useState(0)
   const cfg = getScoreConfig(score)
 
-  // Animate score on mount
   useEffect(() => {
     if (loading) return
-    const start = Date.now()
-    const duration = 1200
+    const start = Date.now(), duration = 1000
     const raf = () => {
-      const elapsed = Date.now() - start
-      const progress = Math.min(elapsed / duration, 1)
-      const eased = 1 - Math.pow(1 - progress, 3)
-      setAnimatedScore(Math.round(eased * score))
-      if (progress < 1) requestAnimationFrame(raf)
+      const p = Math.min((Date.now() - start) / duration, 1)
+      setAnimatedScore(Math.round((1 - Math.pow(1 - p, 3)) * score))
+      if (p < 1) requestAnimationFrame(raf)
     }
     requestAnimationFrame(raf)
   }, [score, loading])
 
-  // SVG ring params
-  const R = 52, C = 2 * Math.PI * R
-  const pct = animatedScore / 100
-  const dashOffset = C * (1 - pct)
+  const R = 44, C = 2 * Math.PI * R
+  const dashOffset = C * (1 - animatedScore / 100)
 
   const bars = breakdown || [
-    { label: 'Savings Rate',     value: score > 70 ? 85 : score > 50 ? 60 : 35, color: '#10b981' },
-    { label: 'Budget Adherence', value: score > 70 ? 78 : score > 50 ? 55 : 40, color: '#6366f1' },
-    { label: 'Expense Control',  value: score > 70 ? 72 : score > 50 ? 65 : 50, color: '#22d3ee' },
-    { label: 'Income Stability', value: score > 70 ? 90 : score > 50 ? 75 : 60, color: '#a855f7' },
+    { label: 'Savings Rate',     value: 35, color: '#22c55e' },
+    { label: 'Budget Adherence', value: 60, color: '#ffffff' },
+    { label: 'Expense Control',  value: 75, color: '#888888' },
+    { label: 'Overspending',     value: 5,  color: '#ef4444' },
   ]
 
-  if (loading) {
-    return (
-      <div className="card" style={{ padding: 20 }}>
-        <div className="skeleton" style={{ width: 120, height: 12, marginBottom: 20 }} />
-        <div style={{ display: 'flex', gap: 24 }}>
-          <div className="skeleton" style={{ width: 120, height: 120, borderRadius: '50%', flexShrink: 0 }} />
-          <div style={{ flex: 1 }}>
-            {[1,2,3,4].map(i => <div key={i} className="skeleton" style={{ height: 8, marginBottom: 12, width: `${70 + i*5}%` }} />)}
-          </div>
+  if (loading) return (
+    <div className="card" style={{ padding: 18 }}>
+      <div className="skeleton" style={{ width: 120, height: 11, marginBottom: 16 }} />
+      <div style={{ display: 'flex', gap: 16 }}>
+        <div className="skeleton" style={{ width: 96, height: 96, borderRadius: '50%', flexShrink: 0 }} />
+        <div style={{ flex: 1 }}>
+          {[1,2,3,4].map(i => <div key={i} className="skeleton" style={{ height: 7, marginBottom: 10, width: `${80 + i * 3}%` }} />)}
         </div>
       </div>
-    )
-  }
+    </div>
+  )
 
   return (
-    <div className="card" style={{ padding: 20, background: 'linear-gradient(135deg, var(--bg-card) 0%, rgba(99,102,241,0.04) 100%)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+    <div className="card" style={{ padding: 18 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
         <div>
-          <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: 2 }}>Financial Health</p>
-          <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Health Score</p>
+          <p style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#444444', marginBottom: 1 }}>Financial Health</p>
+          <p style={{ fontSize: 13, fontWeight: 700, color: '#ffffff' }}>Health Score</p>
         </div>
-        <span className="badge" style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.color}30`, fontSize: 10 }}>
+        <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 9px', borderRadius: 99, background: `${cfg.color}14`, color: cfg.color, border: `1px solid ${cfg.color}28` }}>
           {cfg.label}
         </span>
       </div>
 
-      <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
-        {/* Ring */}
-        <div style={{ position: 'relative', width: 120, height: 120, flexShrink: 0 }}>
-          <svg width="120" height="120" viewBox="0 0 120 120">
-            {/* Track */}
-            <circle cx="60" cy="60" r={R} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="10" />
-            {/* Fill */}
-            <circle
-              cx="60" cy="60" r={R} fill="none"
-              stroke={cfg.color} strokeWidth="10"
-              strokeDasharray={C}
-              strokeDashoffset={dashOffset}
-              strokeLinecap="round"
-              transform="rotate(-90 60 60)"
-              style={{ transition: 'stroke-dashoffset 0.05s linear', filter: `drop-shadow(0 0 8px ${cfg.color}80)` }}
+      <div className="health-score-inner" style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+        <div style={{ position: 'relative', width: 96, height: 96, flexShrink: 0 }}>
+          <svg width="96" height="96" viewBox="0 0 96 96">
+            <circle cx="48" cy="48" r={R} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
+            <circle cx="48" cy="48" r={R} fill="none"
+              stroke={cfg.color} strokeWidth="8"
+              strokeDasharray={C} strokeDashoffset={dashOffset}
+              strokeLinecap="round" transform="rotate(-90 48 48)"
+              style={{ transition: 'stroke-dashoffset 0.05s linear', filter: `drop-shadow(0 0 6px ${cfg.color}60)` }}
             />
           </svg>
-          <div style={{
-            position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center',
-          }}>
-            <span className="font-mono" style={{ fontSize: 26, fontWeight: 800, color: cfg.color, lineHeight: 1 }}>
-              {animatedScore}
-            </span>
-            <span style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>/100</span>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <span className="font-mono" style={{ fontSize: 22, fontWeight: 800, color: cfg.color, lineHeight: 1 }}>{animatedScore}</span>
+            <span style={{ fontSize: 9, color: '#444444', marginTop: 1 }}>/100</span>
           </div>
         </div>
 
-        {/* Breakdown bars */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="health-score-bars" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 9 }}>
           {bars.map((bar, i) => (
             <div key={i}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontWeight: 500 }}>{bar.label}</span>
-                <span className="font-mono" style={{ fontSize: 11, color: bar.color, fontWeight: 600 }}>{bar.value}%</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+                <span style={{ fontSize: 10, color: '#666666', fontWeight: 500 }}>{bar.label}</span>
+                <span className="font-mono" style={{ fontSize: 10, color: bar.color, fontWeight: 600 }}>{bar.value}%</span>
               </div>
               <div className="progress-track">
-                <div className="progress-fill" style={{ width: `${bar.value}%`, background: bar.color, boxShadow: `0 0 6px ${bar.color}60` }} />
+                <div className="progress-fill" style={{ width: `${bar.value}%`, background: bar.color }} />
               </div>
             </div>
           ))}
