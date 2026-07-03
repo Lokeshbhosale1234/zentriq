@@ -19,6 +19,8 @@ const NOTIFS = [
 
 export default function Topbar({ onAddTransaction, onMobileMenuToggle }) {
   const location = useLocation()
+  const navigate = useNavigate()
+const [searchValue, setSearchValue] = useState('')
   const [showNotifs, setShowNotifs] = useState(false)
   const [notifs, setNotifs] = useState(NOTIFS)
   const notifRef = useRef(null)
