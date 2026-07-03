@@ -82,16 +82,24 @@ public class TransactionService {
                         ? category.trim()
                         : null;
 
+        // Convert typed params to String for the native query
+        // (avoids PostgreSQL "could not determine data type of parameter $N" on nulls)
+        String typeStr     = (typeEnum   != null) ? typeEnum.name()             : null;
+        String dateFromStr = (dateFrom   != null) ? dateFrom.toString()          : null;
+        String dateToStr   = (dateTo     != null) ? dateTo.toString()            : null;
+        String minAmtStr   = (minAmount  != null) ? minAmount.toPlainString()   : null;
+        String maxAmtStr   = (maxAmount  != null) ? maxAmount.toPlainString()   : null;
+
         return transactionRepository
                 .searchTransactions(
-                        user,
+                        user.getId(),
                         searchVal,
                         categoryVal,
-                        typeEnum,
-                        dateFrom,
-                        dateTo,
-                        minAmount,
-                        maxAmount
+                        typeStr,
+                        dateFromStr,
+                        dateToStr,
+                        minAmtStr,
+                        maxAmtStr
                 )
                 .stream()
                 .map(this::toDTO)

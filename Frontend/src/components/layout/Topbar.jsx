@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 const PAGE_TITLES = {
   '/':             { title: 'Overview',      sub: 'Your financial overview' },
@@ -67,7 +67,18 @@ export default function Topbar({ onAddTransaction, onMobileMenuToggle }) {
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#444444" strokeWidth="2" strokeLinecap="round">
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
-        <input placeholder="Search transactions…" aria-label="Search" />
+        <input
+          value={searchValue}
+          onChange={e => setSearchValue(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter' && e.target.value.trim()) {
+              navigate('/transactions?q=' + encodeURIComponent(e.target.value.trim()))
+              setSearchValue('')
+            }
+          }}
+          placeholder="Search transactions…"
+          aria-label="Search transactions"
+        />
         <span style={{ fontSize: 10, color: '#333333', background: 'rgba(255,255,255,0.05)', padding: '2px 5px', borderRadius: 3, letterSpacing: '0.04em' }}>⌘K</span>
       </div>
 

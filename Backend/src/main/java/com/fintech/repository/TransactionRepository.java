@@ -131,26 +131,31 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     // ── Search / filter ───────────────────────────────────────────────────────
 
-    @Query("""
-                SELECT t
-                FROM Transaction t
-                WHERE t.user = :user
-                  AND (:search   IS NULL OR LOWER(t.title) LIKE LOWER(CONCAT('%', :search, '%')))
-                  AND (:category IS NULL OR t.category = :category)
-                  AND (:type     IS NULL OR t.type     = :type)
-                  AND (:dateFrom IS NULL OR t.transactionDate >= :dateFrom)
-                  AND (:dateTo   IS NULL OR t.transactionDate <= :dateTo)
-                  AND (:minAmt   IS NULL OR t.amount >= :minAmt)
-                  AND (:maxAmt   IS NULL OR t.amount <= :maxAmt)
-                ORDER BY t.transactionDate DESC
-            """)
+    // FIX: nativeQuery with PostgreSQL :: cast operators.
+    // JPQL fails on null typed params (BigDecimal/enum/LocalDateTime) because
+    // PostgreSQL prepared statements need the type of every param including nulls.
+    // ::numeric, ::text, ::timestamp tell PostgreSQL the type even when value is null.
+    // User changed to userId (Long) because native queries can't traverse JPA relations.
+    // TransactionType changed to typeStr (String) — pass the enum name e.g. "DEBIT".
+    @Query(value = """
+                SELECT t.* FROM transactions t
+                WHERE t.user_id = :userId
+                  AND (:search::text     IS NULL OR LOWER(t.title) LIKE LOWER(CONCAT('%', :search::text, '%')))
+                  AND (:category::text   IS NULL OR t.category = :category::text)
+                  AND (:typeStr::text    IS NULL OR t.type = :typeStr::text)
+                  AND (:dateFrom::timestamp IS NULL OR t.transaction_date >= :dateFrom::timestamp)
+                  AND (:dateTo::timestamp   IS NULL OR t.transaction_date <= :dateTo::timestamp)
+                  AND (:minAmt::numeric  IS NULL OR t.amount >= :minAmt::numeric)
+                  AND (:maxAmt::numeric  IS NULL OR t.amount <= :maxAmt::numeric)
+                ORDER BY t.transaction_date DESC
+            """, nativeQuery = true)
     List<Transaction> searchTransactions(
-            @Param("user")     User            user,
-            @Param("search")   String          search,
-            @Param("category") String          category,
-            @Param("type")     TransactionType type,
-            @Param("dateFrom") LocalDateTime   dateFrom,
-            @Param("dateTo")   LocalDateTime   dateTo,
-            @Param("minAmt")   BigDecimal      minAmt,
-            @Param("maxAmt")   BigDecimal      maxAmt);
+            @Param("userId")   Long   userId,
+            @Param("search")   String search,
+            @Param("category") String category,
+            @Param("typeStr")  String typeStr,
+            @Param("dateFrom") String dateFrom,
+            @Param("dateTo")   String dateTo,
+            @Param("minAmt")   String minAmt,
+            @Param("maxAmt")   String maxAmt);
 }

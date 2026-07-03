@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react'
 import TransactionsTable   from '../components/transactions/TransactionsTable'
 import ErrorBanner         from '../components/ui/ErrorBanner'
+import { useSearchParams } from 'react-router-dom'
 import { useTransactions } from '../hooks/useTransactions'
 import { formatCurrency, CATEGORIES } from '../utils/formatters'
 import { transactionApi }  from '../api/transactionApi'
@@ -14,6 +15,7 @@ const Spinner = () => (
 
 export default function Transactions() {
   const { transactions, loading, error, deleteTransaction, refetch } = useTransactions()
+  const [searchParams] = useSearchParams()
 
   const [search,       setSearch]       = useState('')
   const [category,     setCategory]     = useState('')
@@ -24,8 +26,17 @@ export default function Transactions() {
   const [maxAmount,    setMaxAmount]    = useState('')
   const [showFilters,  setShowFilters]  = useState(false)
   const [filterLoading,setFilterLoading]= useState(false)
+  const [filterError,   setFilterError]   = useState(null)
   const [refreshing,   setRefreshing]   = useState(false)
   const [filtered,     setFiltered]     = useState(null)
+
+  // Pick up ?q= param set by the topbar global search
+  useEffect(() => {
+    const q = searchParams.get('q')
+    if (q && q !== search) {
+      setSearch(q)
+    }
+  }, [searchParams])
 
   const hasActiveFilters = search || category || type || dateFrom || dateTo || minAmount || maxAmount
 
@@ -44,7 +55,7 @@ export default function Transactions() {
       const data = await transactionApi.search(params)
       setFiltered(data)
     } catch (err) {
-      alert('Search failed: ' + err.message)
+      setFilterError(err?.response?.data?.message || err.message || 'Search failed')
     } finally {
       setFilterLoading(false)
     }
@@ -82,6 +93,7 @@ export default function Transactions() {
   return (
     <div className="page-enter" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <ErrorBanner message={error} onRetry={refetch} />
+      {filterError && <ErrorBanner message={filterError} onRetry={applyFilters} />}
 
       {/* ── Summary stats ─────────────────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
