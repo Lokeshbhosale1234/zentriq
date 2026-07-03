@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import TransactionsTable   from '../components/transactions/TransactionsTable'
 import ErrorBanner         from '../components/ui/ErrorBanner'
 import { useSearchParams } from 'react-router-dom'
