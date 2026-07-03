@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 
 const PAGE_TITLES = {
   '/':             { title: 'Overview',      sub: 'Your financial overview' },
@@ -19,8 +19,6 @@ const NOTIFS = [
 
 export default function Topbar({ onAddTransaction, onMobileMenuToggle }) {
   const location = useLocation()
-  const navigate = useNavigate()
-const [searchValue, setSearchValue] = useState('')
   const [showNotifs, setShowNotifs] = useState(false)
   const [notifs, setNotifs] = useState(NOTIFS)
   const notifRef = useRef(null)
@@ -64,25 +62,7 @@ const [searchValue, setSearchValue] = useState('')
         )}
       </div>
 
-      {/* Search */}
-      <div className="topbar-search hidden md:flex">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#444444" strokeWidth="2" strokeLinecap="round">
-          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-        <input
-          value={searchValue}
-          onChange={e => setSearchValue(e.target.value)}
-          onKeyDown={e => {
-            if (e.key === 'Enter' && e.target.value.trim()) {
-              navigate('/transactions?q=' + encodeURIComponent(e.target.value.trim()))
-              setSearchValue('')
-            }
-          }}
-          placeholder="Search transactions…"
-          aria-label="Search transactions"
-        />
-        <span style={{ fontSize: 10, color: '#333333', background: 'rgba(255,255,255,0.05)', padding: '2px 5px', borderRadius: 3, letterSpacing: '0.04em' }}>⌘K</span>
-      </div>
+
 
       {/* Add transaction */}
       <button onClick={onAddTransaction} className="btn btn-primary" style={{ height: 34, padding: '0 13px', fontSize: 12 }}>
