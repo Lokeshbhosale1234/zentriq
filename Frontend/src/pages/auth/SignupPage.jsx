@@ -9,17 +9,7 @@ const Spinner = () => (
   </svg>
 )
 
-const ArvexaMark = ({ size = 26 }) => (
-  <div style={{
-    width: size, height: size, display: 'grid',
-    gridTemplateColumns: 'repeat(3,1fr)', gap: Math.round(size * 0.1),
-    flexShrink: 0, padding: Math.round(size * 0.1),
-  }}>
-    {[1,0,1, 1,1,0, 0,1,1].map((on, i) => (
-      <div key={i} style={{ borderRadius: 2, background: on ? '#ffffff' : 'rgba(255,255,255,0.2)' }} />
-    ))}
-  </div>
-)
+
 
 const StrengthBar = ({ password }) => {
   const checks = [password.length >= 8, /[A-Z]/.test(password), /[0-9]/.test(password), /[^A-Za-z0-9]/.test(password)]
@@ -73,10 +63,22 @@ export default function SignupPage() {
       <div style={{ width: '100%', maxWidth: 400 }}>
 
         {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 32 }}>
-          <ArvexaMark size={26} />
-          <span style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-0.04em', color: '#ffffff' }}>Arvexa</span>
-        </div>
+        <div
+  style={{
+    display: "flex",
+    justifyContent: "center",
+    marginBottom: 32,
+  }}
+>
+  <img
+    src="/arvexa-horizontal.png"
+    alt="Arvexa"
+    style={{
+      height: 30,
+      width: "auto",
+    }}
+  />
+</div>
 
         <div style={{ background: '#141414', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: '30px 26px' }}>
           <div style={{ marginBottom: 22 }}>

@@ -9,18 +9,7 @@ const Spinner = () => (
   </svg>
 )
 
-/* Arvexa grid-dot logo mark */
-const ArvexaMark = ({ size = 26 }) => (
-  <div style={{
-    width: size, height: size, display: 'grid',
-    gridTemplateColumns: 'repeat(3,1fr)', gap: Math.round(size * 0.1),
-    flexShrink: 0, padding: Math.round(size * 0.1),
-  }}>
-    {[1,0,1, 1,1,0, 0,1,1].map((on, i) => (
-      <div key={i} style={{ borderRadius: 2, background: on ? '#ffffff' : 'rgba(255,255,255,0.2)' }} />
-    ))}
-  </div>
-)
+
 
 export default function LoginPage() {
   const navigate     = useNavigate()
@@ -63,10 +52,14 @@ export default function LoginPage() {
         padding: '48px 48px', position: 'relative', justifyContent: 'space-between',
       }}>
         {/* Logo top-left */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <ArvexaMark size={28} />
-          <span style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-0.04em', color: '#ffffff' }}>Arvexa</span>
-        </div>
+        <img
+            src="/arvexa-horizontal.png"
+            alt="Arvexa"
+            style={{
+              height: 32,
+              width: "auto"
+            }}
+          />
 
         {/* Center content */}
         <div>
@@ -115,10 +108,22 @@ export default function LoginPage() {
         <div style={{ width: '100%', maxWidth: 380 }}>
 
           {/* Mobile logo */}
-          <div className="flex lg:hidden" style={{ alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 36 }}>
-            <ArvexaMark size={26} />
-            <span style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-0.04em', color: '#ffffff' }}>Arvexa</span>
-          </div>
+          <div
+  className="flex lg:hidden"
+  style={{
+    justifyContent: "center",
+    marginBottom: 36,
+  }}
+>
+  <img
+    src="/arvexa-horizontal.png"
+    alt="Arvexa"
+    style={{
+      height: 30,
+      width: "auto",
+    }}
+  />
+</div>
 
           <div style={{ marginBottom: 28 }}>
             <h2 style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.04em', color: '#ffffff', marginBottom: 5 }}>

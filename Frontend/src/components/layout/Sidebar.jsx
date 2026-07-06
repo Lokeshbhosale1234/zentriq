@@ -38,27 +38,7 @@ const SOON = [
 ]
 
 /* ── Arvexa Wordmark Logo ───────────────────────────────────────── */
-const ArvexaLogo = ({ collapsed }) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-    <div style={{
-      width: 28, height: 28, display: 'grid',
-      gridTemplateColumns: 'repeat(3,1fr)', gap: 3, flexShrink: 0,
-      padding: 3,
-    }}>
-      {[1,0,1, 1,1,0, 0,1,1].map((on, i) => (
-        <div key={i} style={{ borderRadius: 2, background: on ? '#ffffff' : 'rgba(255,255,255,0.18)' }} />
-      ))}
-    </div>
-    {!collapsed && (
-      <span style={{
-        fontSize: 16, fontWeight: 800, letterSpacing: '-0.04em',
-        color: '#ffffff', whiteSpace: 'nowrap', fontFamily: 'Inter, sans-serif',
-      }}>
-        Arvexa
-      </span>
-    )}
-  </div>
-)
+
 
 /* ── Account popover icons ────────────────────────────────────────── */
 const IconUser = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -129,7 +109,28 @@ export default function Sidebar({ mobileOpen, onMobileClose }) {
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           flexShrink: 0,
         }}>
-          <ArvexaLogo collapsed={collapsed} />
+          <div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    justifyContent: collapsed ? "center" : "flex-start",
+    flex: 1,
+    overflow: "hidden",
+  }}
+> 
+  <img
+  src={collapsed
+      ? "/arvexa-monogram.png"
+      : "/arvexa-horizontal.png"}
+  alt="Arvexa"
+  style={{
+     height: collapsed ? 28 : 30, 
+      width: "auto",
+      objectFit: "contain",
+      transition: "all .25s ease",
+  }}
+/>  
+</div>
 
           <button
             onClick={() => setCollapsed(p => !p)}
