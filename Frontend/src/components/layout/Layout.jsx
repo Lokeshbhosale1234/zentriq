@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react'
 import Sidebar from './Sidebar'
 import Topbar  from './Topbar'
 
+const SIDEBAR_FULL = 256
+const SIDEBAR_SLIM = 64
+
 export default function Layout({ children, onAddTransaction }) {
-  const [mobileOpen,   setMobileOpen]   = useState(false)
-  const [sidebarWidth, setSidebarWidth] = useState(256)
-  const [isMobile,     setIsMobile]     = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const [collapsed,  setCollapsed]  = useState(false)
+  const [isMobile,   setIsMobile]   = useState(false)
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 1024)
@@ -14,17 +17,8 @@ export default function Layout({ children, onAddTransaction }) {
     return () => window.removeEventListener('resize', check)
   }, [])
 
-  useEffect(() => {
-    const el = document.querySelector('aside[aria-label="Main navigation"]')
-    if (!el) return
-    const obs = new ResizeObserver(entries => {
-      for (const entry of entries) setSidebarWidth(entry.contentRect.width)
-    })
-    obs.observe(el)
-    return () => obs.disconnect()
-  }, [])
-
-  const marginLeft = isMobile ? 0 : sidebarWidth
+  const sidebarWidth = collapsed ? SIDEBAR_SLIM : SIDEBAR_FULL
+  const marginLeft   = isMobile ? 0 : sidebarWidth
 
   return (
     <div style={{ background: 'var(--bg-base)', minHeight: '100dvh', position: 'relative' }}>
@@ -35,7 +29,11 @@ export default function Layout({ children, onAddTransaction }) {
       }}/>
       <div className="noise-overlay" aria-hidden />
 
-      <Sidebar mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
+      <Sidebar
+        mobileOpen={mobileOpen}
+        onMobileClose={() => setMobileOpen(false)}
+        collapsed={collapsed}
+      />
 
       <div style={{
         position: 'relative', zIndex: 1, minHeight: '100dvh',
@@ -43,7 +41,12 @@ export default function Layout({ children, onAddTransaction }) {
         marginLeft,
         transition: 'margin-left 0.25s cubic-bezier(0.4,0,0.2,1)',
       }}>
-        <Topbar onAddTransaction={onAddTransaction} onMobileMenuToggle={() => setMobileOpen(p => !p)} />
+        <Topbar
+          onAddTransaction={onAddTransaction}
+          onMobileMenuToggle={() => setMobileOpen(p => !p)}
+          onToggleSidebar={() => setCollapsed(p => !p)}
+          sidebarCollapsed={collapsed}
+        />
         <main style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', scrollbarGutter: 'stable' }}>
           <div className="main-content">
             {children}

@@ -2,13 +2,13 @@ import React, { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { login } from '../../api/authApi'
 import { useAuth } from '../../context/AuthContext'
+import { ArvexaIcon } from '../../components/layout/Sidebar'
 
 const Spinner = () => (
   <svg className="animate-spin-custom" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" opacity=".2"/><path d="M21 12a9 9 0 00-9-9"/>
   </svg>
 )
-
 
 
 export default function LoginPage() {
@@ -52,14 +52,10 @@ export default function LoginPage() {
         padding: '48px 48px', position: 'relative', justifyContent: 'space-between',
       }}>
         {/* Logo top-left */}
-        <img
-            src="/arvexa-horizontal.png"
-            alt="Arvexa"
-            style={{
-              height: 32,
-              width: "auto"
-            }}
-          />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <ArvexaIcon size={28} />
+          <span style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-0.04em', color: '#ffffff' }}>Arvexa</span>
+        </div>
 
         {/* Center content */}
         <div>
@@ -108,22 +104,10 @@ export default function LoginPage() {
         <div style={{ width: '100%', maxWidth: 380 }}>
 
           {/* Mobile logo */}
-          <div
-  className="flex lg:hidden"
-  style={{
-    justifyContent: "center",
-    marginBottom: 36,
-  }}
->
-  <img
-    src="/arvexa-horizontal.png"
-    alt="Arvexa"
-    style={{
-      height: 30,
-      width: "auto",
-    }}
-  />
-</div>
+          <div className="flex lg:hidden" style={{ alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 36 }}>
+            <ArvexaIcon size={26} />
+            <span style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-0.04em', color: '#ffffff' }}>Arvexa</span>
+          </div>
 
           <div style={{ marginBottom: 28 }}>
             <h2 style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.04em', color: '#ffffff', marginBottom: 5 }}>

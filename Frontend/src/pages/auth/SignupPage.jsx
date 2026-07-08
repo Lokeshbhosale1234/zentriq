@@ -2,13 +2,13 @@ import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { register } from '../../api/authApi'
 import { useAuth } from '../../context/AuthContext'
+import { ArvexaIcon } from '../../components/layout/Sidebar'
 
 const Spinner = () => (
   <svg className="animate-spin-custom" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" opacity=".2"/><path d="M21 12a9 9 0 00-9-9"/>
   </svg>
 )
-
 
 
 const StrengthBar = ({ password }) => {
@@ -63,22 +63,10 @@ export default function SignupPage() {
       <div style={{ width: '100%', maxWidth: 400 }}>
 
         {/* Logo */}
-        <div
-  style={{
-    display: "flex",
-    justifyContent: "center",
-    marginBottom: 32,
-  }}
->
-  <img
-    src="/arvexa-horizontal.png"
-    alt="Arvexa"
-    style={{
-      height: 30,
-      width: "auto",
-    }}
-  />
-</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 32 }}>
+          <ArvexaIcon size={26} />
+          <span style={{ fontSize: 17, fontWeight: 800, letterSpacing: '-0.04em', color: '#ffffff' }}>Arvexa</span>
+        </div>
 
         <div style={{ background: '#141414', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: '30px 26px' }}>
           <div style={{ marginBottom: 22 }}>
