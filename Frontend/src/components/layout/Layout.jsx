@@ -2,13 +2,10 @@ import React, { useState, useEffect } from 'react'
 import Sidebar from './Sidebar'
 import Topbar  from './Topbar'
 
-const SIDEBAR_FULL = 256
-const SIDEBAR_SLIM = 64
-
 export default function Layout({ children, onAddTransaction }) {
-  const [mobileOpen, setMobileOpen] = useState(false)
-  const [collapsed,  setCollapsed]  = useState(false)
-  const [isMobile,   setIsMobile]   = useState(false)
+  const [mobileOpen,   setMobileOpen]   = useState(false)
+  const [sidebarWidth, setSidebarWidth] = useState(256)
+  const [isMobile,     setIsMobile]     = useState(false)
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 1024)
@@ -17,8 +14,23 @@ export default function Layout({ children, onAddTransaction }) {
     return () => window.removeEventListener('resize', check)
   }, [])
 
-  const sidebarWidth = collapsed ? SIDEBAR_SLIM : SIDEBAR_FULL
-  const marginLeft   = isMobile ? 0 : sidebarWidth
+  useEffect(() => {
+    const el = document.querySelector('aside[aria-label="Main navigation"]')
+    if (!el) return
+    const obs = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        // Use the border-box size (matches the sidebar's actual rendered width,
+        // since box-sizing: border-box is used globally) instead of contentRect,
+        // which excludes the sidebar's 1px border and causes a hairline gap.
+        const borderBoxWidth = entry.borderBoxSize?.[0]?.inlineSize
+        setSidebarWidth(borderBoxWidth ?? entry.contentRect.width)
+      }
+    })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+
+  const marginLeft = isMobile ? 0 : sidebarWidth
 
   return (
     <div style={{ background: 'var(--bg-base)', minHeight: '100dvh', position: 'relative' }}>
@@ -29,24 +41,21 @@ export default function Layout({ children, onAddTransaction }) {
       }}/>
       <div className="noise-overlay" aria-hidden />
 
-      <Sidebar
-        mobileOpen={mobileOpen}
-        onMobileClose={() => setMobileOpen(false)}
-        collapsed={collapsed}
-      />
+      <Sidebar mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
 
       <div style={{
         position: 'relative', zIndex: 1, minHeight: '100dvh',
         display: 'flex', flexDirection: 'column',
         marginLeft,
-        transition: 'margin-left 0.25s cubic-bezier(0.4,0,0.2,1)',
+        // No transition here on purpose: the ResizeObserver above already
+        // reports the sidebar's width on every animation frame while it
+        // transitions (aside has its own 'width 0.25s' transition). Adding
+        // a second transition on marginLeft double-eases an already-animating
+        // value, so content lags a step behind the sidebar and a gap appears
+        // mid-animation. Letting marginLeft snap to each observed value keeps
+        // it perfectly in lockstep with the sidebar instead.
       }}>
-        <Topbar
-          onAddTransaction={onAddTransaction}
-          onMobileMenuToggle={() => setMobileOpen(p => !p)}
-          onToggleSidebar={() => setCollapsed(p => !p)}
-          sidebarCollapsed={collapsed}
-        />
+        <Topbar onAddTransaction={onAddTransaction} onMobileMenuToggle={() => setMobileOpen(p => !p)} />
         <main style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', scrollbarGutter: 'stable' }}>
           <div className="main-content">
             {children}
