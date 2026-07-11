@@ -58,7 +58,7 @@ const SOON = [
 
 const ArvexaLogo = ({ collapsed }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-    <ArvexaIcon size={22} />
+    <ArvexaIcon size={26} />
     <span className={`sidebar-fade ${collapsed ? 'is-collapsed' : ''}`}>
       Arvexa
     </span>

@@ -44,7 +44,7 @@ export default function LoginPage() {
       {/* Left panel */}
       <div className="hidden lg:flex" style={{ flex: '0 0 42%', flexDirection: 'column', background: '#0f0f0f', borderRight: '1px solid rgba(255,255,255,0.06)', padding: '48px 52px', position: 'relative', zIndex: 1, justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-          <ArvexaIcon size={22} />
+          <ArvexaIcon size={26} />
           <span style={{ fontSize: 15, fontWeight: 800, letterSpacing: '-0.045em', color: '#ffffff', fontFamily: 'Inter, system-ui, sans-serif' }}>Arvexa</span>
         </div>
         <div>
@@ -72,7 +72,7 @@ export default function LoginPage() {
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', background: '#0a0a0a', position: 'relative', zIndex: 1 }}>
         <div style={{ width: '100%', maxWidth: 380 }}>
           <div className="flex lg:hidden" style={{ alignItems: 'center', justifyContent: 'center', gap: 9, marginBottom: 36 }}>
-            <ArvexaIcon size={22} />
+            <ArvexaIcon size={26} />
             <span style={{ fontSize: 15, fontWeight: 800, letterSpacing: '-0.045em', color: '#ffffff' }}>Arvexa</span>
           </div>
           <div style={{ marginBottom: 26 }}>

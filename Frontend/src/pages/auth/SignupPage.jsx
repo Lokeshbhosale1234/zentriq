@@ -60,7 +60,7 @@ export default function SignupPage() {
     <div style={{ minHeight: '100dvh', background: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 16px' }}>
       <div style={{ width: '100%', maxWidth: 420 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, marginBottom: 28 }}>
-          <ArvexaIcon size={22} />
+          <ArvexaIcon size={26} />
           <span style={{ fontSize: 15, fontWeight: 800, letterSpacing: '-0.045em', color: '#ffffff', fontFamily: 'Inter, system-ui, sans-serif' }}>Arvexa</span>
         </div>
         <div style={{ background: '#141414', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: '28px 26px' }}>
