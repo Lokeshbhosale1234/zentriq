@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { NavLink, useLocation} from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 
 const NAV = [
@@ -38,17 +38,35 @@ const SOON = [
 ]
 
 /* ── Arvexa Wordmark Logo ───────────────────────────────────────── */
+
+export const ArvexaIcon = ({ size = 28 }) => (
+  <div
+    style={{
+      width: size,
+      height: size,
+      display: 'grid',
+      gridTemplateColumns: 'repeat(3,1fr)',
+      gap: 3,
+      padding: 3,
+      flexShrink: 0,
+    }}
+  >
+    {[1,0,1,1,1,0,0,1,1].map((on, i) => (
+      <div
+        key={i}
+        style={{
+          borderRadius: 2,
+          background: on
+            ? '#ffffff'
+            : 'rgba(255,255,255,0.18)',
+        }}
+      />
+    ))}
+  </div>
+)
 const ArvexaLogo = ({ collapsed }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-    <div style={{
-      width: 28, height: 28, display: 'grid',
-      gridTemplateColumns: 'repeat(3,1fr)', gap: 3, flexShrink: 0,
-      padding: 3,
-    }}>
-      {[1,0,1, 1,1,0, 0,1,1].map((on, i) => (
-        <div key={i} style={{ borderRadius: 2, background: on ? '#ffffff' : 'rgba(255,255,255,0.18)' }} />
-      ))}
-    </div>
+    <ArvexaIcon size={28} />
     <span className={`sidebar-fade ${collapsed ? 'is-collapsed' : ''}`} style={{
       fontSize: 16, fontWeight: 800, letterSpacing: '-0.04em',
       color: '#ffffff', fontFamily: 'Inter, sans-serif',
@@ -69,7 +87,7 @@ export default function Sidebar({ mobileOpen, onMobileClose }) {
   const [showAccountMenu, setShowAccountMenu] = useState(false)
   const { user, logout } = useAuth()
   const location = useLocation()
-  const navigate = useNavigate()
+
   const accountRef = useRef(null)
 
   useEffect(() => { onMobileClose?.() }, [location.pathname])
