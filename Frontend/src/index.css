@@ -3,17 +3,8 @@
    Design: Pure Black × Monochrome × Enterprise Grade
    Inspired by: Efferd UI Design System
    ═══════════════════════════════════════════════════════════════════ */
-@import "@fontsource/inter/400.css";
-@import "@fontsource/inter/500.css";
-@import "@fontsource/inter/600.css";
-@import "@fontsource/inter/700.css";
-@import "@fontsource/inter/800.css";
 
-@import "@fontsource/jetbrains-mono/400.css";
-@import "@fontsource/jetbrains-mono/500.css";
-@import "@fontsource/jetbrains-mono/600.css";
-
-
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -286,24 +277,69 @@ body {
 
 /* ── Sidebar nav link ───────────────────────────────────────────── */
 .nav-link {
-  display: flex; align-items: center; gap: 9px;
-  padding: 7px 10px; border-radius: var(--r-md);
+  display: flex; align-items: center; gap: 10px;
+  height: 40px; padding: 0 10px; border-radius: 10px;
   color: var(--text-secondary); font-size: 13px; font-weight: 500;
   text-decoration: none; cursor: pointer;
-  transition: all var(--t-fast) var(--ease);
+  transition: background 200ms ease-in-out, color 200ms ease-in-out, width 220ms ease-in-out, padding 220ms ease-in-out;
   position: relative; white-space: nowrap; overflow: hidden;
   border: 1px solid transparent;
 }
 .nav-link:hover {
-  background: rgba(255,255,255,0.05);
+  background: rgba(255,255,255,0.04);
   color: var(--text-primary);
 }
 .nav-link.active {
-  background: rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.06);
   color: var(--text-primary);
-  border-color: rgba(255,255,255,0.08);
+  border-color: transparent;
 }
 .nav-link.active .nav-icon { color: #ffffff; }
+
+/* Collapsed rail: compact, centered square control instead of a full-width bar */
+.nav-link.collapsed {
+  justify-content: center;
+  width: 36px; height: 36px;
+  padding: 0;
+  margin: 0 auto;
+}
+
+/* ── Sidebar section label (scoped — doesn't affect dashboard card headers) ── */
+.sidebar-section-label {
+  font-size: 11px; font-weight: 600; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.08em;
+}
+
+/* ── Sidebar text that fades/collapses instead of unmounting abruptly ── */
+.sidebar-fade {
+  opacity: 1; max-width: 200px;
+  overflow: hidden; white-space: nowrap;
+  transition: opacity 220ms ease-in-out, max-width 220ms ease-in-out, margin 220ms ease-in-out;
+}
+.sidebar-fade.is-collapsed {
+  opacity: 0; max-width: 0; margin: 0 !important;
+  pointer-events: none;
+}
+
+/* ── Sidebar collapse toggle (Efferd-style small square icon button) ─ */
+.sidebar-toggle {
+  width: 32px; height: 32px; padding: 0; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: #666666;
+  cursor: pointer;
+  transition: background 200ms ease-in-out, border-color 200ms ease-in-out, color 200ms ease-in-out;
+}
+.sidebar-toggle:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.12);
+  color: #ffffff;
+}
+.sidebar-toggle svg {
+  transition: transform 200ms ease-in-out;
+}
 
 /* ── Progress bar ───────────────────────────────────────────────── */
 .progress-track {
@@ -568,6 +604,27 @@ select.input option {
   color: #ef4444;
 }
 
-
-
+/* ═══════════════════════════════════════════════════════════════════
+   MODAL SYSTEM
+   ═══════════════════════════════════════════════════════════════════ */
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+  animation: fadeIn 0.18s ease both;
+}
+.modal-sheet {
+  background: var(--bg-elevated);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90dvh;
+  overflow-y: auto;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.7);
+  animation: scaleIn 0.2s cubic-bezier(0.34,1.56,0.64,1) both;
+  scrollbar-width: thin;
+}
 body:has(.modal-backdrop) { overflow: hidden; }
