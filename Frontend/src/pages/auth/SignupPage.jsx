@@ -10,6 +10,7 @@ const Spinner = () => (
   </svg>
 )
 
+
 const StrengthBar = ({ password }) => {
   const checks = [password.length >= 8, /[A-Z]/.test(password), /[0-9]/.test(password), /[^A-Za-z0-9]/.test(password)]
   const score  = checks.filter(Boolean).length

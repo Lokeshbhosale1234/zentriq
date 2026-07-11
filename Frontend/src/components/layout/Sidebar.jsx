@@ -2,6 +2,24 @@ import React, { useState, useEffect, useRef } from 'react'
 import { NavLink, useLocation} from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 
+
+export const ArvexaIcon = ({ size = 24 }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 80 80"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+    style={{ display: 'block', flexShrink: 0 }}
+  >
+    <polygon points="6,72 28,8 38,8 16,72" fill="#ffffff" />
+    <polygon points="74,72 52,8 42,8 64,72" fill="#ffffff" />
+    <rect x="16" y="43" width="20" height="10" rx="1.5" fill="#ffffff" />
+    <rect x="44" y="43" width="20" height="10" rx="1.5" fill="#ffffff" />
+  </svg>
+)
+
+
 const NAV = [
   {
     to: '/', label: 'Overview', end: true,
@@ -37,40 +55,11 @@ const SOON = [
   },
 ]
 
-/* ── Arvexa Wordmark Logo ───────────────────────────────────────── */
 
-export const ArvexaIcon = ({ size = 28 }) => (
-  <div
-    style={{
-      width: size,
-      height: size,
-      display: 'grid',
-      gridTemplateColumns: 'repeat(3,1fr)',
-      gap: 3,
-      padding: 3,
-      flexShrink: 0,
-    }}
-  >
-    {[1,0,1,1,1,0,0,1,1].map((on, i) => (
-      <div
-        key={i}
-        style={{
-          borderRadius: 2,
-          background: on
-            ? '#ffffff'
-            : 'rgba(255,255,255,0.18)',
-        }}
-      />
-    ))}
-  </div>
-)
 const ArvexaLogo = ({ collapsed }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-    <ArvexaIcon size={28} />
-    <span className={`sidebar-fade ${collapsed ? 'is-collapsed' : ''}`} style={{
-      fontSize: 16, fontWeight: 800, letterSpacing: '-0.04em',
-      color: '#ffffff', fontFamily: 'Inter, sans-serif',
-    }}>
+    <ArvexaIcon size={22} />
+    <span className={`sidebar-fade ${collapsed ? 'is-collapsed' : ''}`}>
       Arvexa
     </span>
   </div>
