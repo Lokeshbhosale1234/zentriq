@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 
 const PAGE_TITLES = {
   '/':             { title: 'Overview',     sub: 'Your financial overview' },
@@ -17,12 +17,10 @@ const NOTIFS = [
   { id: 4, type: 'info',    title: 'Monthly report',        body: 'Your June summary is ready',       time: '1d ago', unread: false },
 ]
 
-export default function Topbar({ onAddTransaction, onMobileMenuToggle }) {
+export default function Topbar({ onAddTransaction, onMobileMenuToggle , sidebarCollapsed, onToggleSidebar }) {
   const location  = useLocation()
-  const navigate  = useNavigate()
   const [showNotifs,  setShowNotifs]  = useState(false)
   const [notifs,      setNotifs]      = useState(NOTIFS)
-  const [searchValue, setSearchValue] = useState('')
   const notifRef = useRef(null)
 
   const page        = PAGE_TITLES[location.pathname] || { title: 'Arvexa', sub: '' }
@@ -38,12 +36,7 @@ export default function Topbar({ onAddTransaction, onMobileMenuToggle }) {
 
   const markAllRead = () => setNotifs(n => n.map(x => ({ ...x, unread: false })))
 
-  const handleSearchKey = (e) => {
-    if (e.key === 'Enter' && searchValue.trim()) {
-      navigate(`/transactions?q=${encodeURIComponent(searchValue.trim())}`)
-      setSearchValue('')
-    }
-  }
+  
 
   return (
     <header style={{
@@ -56,6 +49,44 @@ export default function Topbar({ onAddTransaction, onMobileMenuToggle }) {
     }}>
 
       {/* Mobile toggle */}
+
+    <button
+    onClick={onToggleSidebar}
+    className="btn-icon hidden lg:flex"
+    aria-label={
+        sidebarCollapsed
+            ? 'Expand sidebar'
+            : 'Collapse sidebar'
+    }
+>
+    <svg
+        width="15"
+        height="15"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+    >
+        <rect
+            x="3"
+            y="4"
+            width="18"
+            height="16"
+            rx="3"
+        />
+        <line
+            x1="9"
+            y1="4"
+            x2="9"
+            y2="20"
+        />
+    </svg>
+</button>
+
+
+
       <button onClick={onMobileMenuToggle} className="btn-icon lg:hidden" style={{ flexShrink: 0 }}>
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
           <line x1="3" y1="12" x2="21" y2="12"/>
@@ -74,20 +105,8 @@ export default function Topbar({ onAddTransaction, onMobileMenuToggle }) {
         )}
       </div>
 
-      {/* Search — restored exactly as original, with functional navigate */}
-      <div className="topbar-search hidden md:flex">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#444444" strokeWidth="2" strokeLinecap="round">
-          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-        <input
-          value={searchValue}
-          onChange={e => setSearchValue(e.target.value)}
-          onKeyDown={handleSearchKey}
-          placeholder="Search transactions…"
-          aria-label="Search"
-        />
-        <span style={{ fontSize: 10, color: '#333333', background: 'rgba(255,255,255,0.05)', padding: '2px 5px', borderRadius: 3, letterSpacing: '0.04em' }}>⌘K</span>
-      </div>
+     
+      
 
       {/* Add transaction */}
       <button onClick={onAddTransaction} className="btn btn-primary" style={{ height: 34, padding: '0 13px', fontSize: 12 }}>

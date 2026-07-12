@@ -6,6 +6,7 @@ export default function Layout({ children, onAddTransaction }) {
   const [mobileOpen,   setMobileOpen]   = useState(false)
   const [sidebarWidth, setSidebarWidth] = useState(256)
   const [isMobile,     setIsMobile]     = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 1024)
@@ -41,7 +42,11 @@ export default function Layout({ children, onAddTransaction }) {
       }}/>
       <div className="noise-overlay" aria-hidden />
 
-      <Sidebar mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
+      <Sidebar
+    mobileOpen={mobileOpen}
+    onMobileClose={() => setMobileOpen(false)}
+    collapsed={collapsed}
+/>
 
       <div style={{
         position: 'relative', zIndex: 1, minHeight: '100dvh',
@@ -55,7 +60,12 @@ export default function Layout({ children, onAddTransaction }) {
         // mid-animation. Letting marginLeft snap to each observed value keeps
         // it perfectly in lockstep with the sidebar instead.
       }}>
-        <Topbar onAddTransaction={onAddTransaction} onMobileMenuToggle={() => setMobileOpen(p => !p)} />
+        <Topbar
+    onAddTransaction={onAddTransaction}
+    onMobileMenuToggle={() => setMobileOpen(p => !p)}
+    sidebarCollapsed={collapsed}
+    onToggleSidebar={() => setCollapsed(p => !p)}
+/>
         <main style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', scrollbarGutter: 'stable' }}>
           <div className="main-content">
             {children}
